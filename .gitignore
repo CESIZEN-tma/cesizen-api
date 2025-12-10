@@ -7,6 +7,16 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/Dotnet.gitignore
 
+# IDE
+.idea
+.vs
+.vscode
+
+# ENV
+.env
+.env.prod
+
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
