@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using api.CZ.Data.AbstractModels;
+using api.scaffold;
 
-namespace api.scaffold;
+namespace api.CZ.Features.Administrators.Models;
 
 public partial class Administrator : SoftDeletableEntity
 {
