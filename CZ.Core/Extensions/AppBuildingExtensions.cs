@@ -28,6 +28,7 @@ public static class AppBuildingExtensions
     {
         app.UseAuthorization();
         app.UseMiddleware<ApiKeyMiddleware>();
+        app.UseMiddleware<ExceptionMiddleware>();
     }
     
     private static void AddCorsRules(this WebApplication app)
