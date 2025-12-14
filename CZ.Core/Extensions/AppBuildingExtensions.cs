@@ -1,3 +1,5 @@
+using api.CZ.Core.Middlewares;
+
 namespace api.CZ.Core.Extensions;
 
 public static class AppBuildingExtensions
@@ -14,25 +16,18 @@ public static class AppBuildingExtensions
 
         app.UseHttpsRedirection();
         
-        app.AddAccessMiddlewares();
+        app.AddMiddlewares();
         
-        app.MapControllers();
+        app.AddOpenApiMapping();
         
-        app.MapGet("/", () =>
-        {
-            string print = "hey";
-            return new
-            {
-                print
-            };
-        });
+        app.MapControllers().WithGroupName("api");
         
         app.Run();
     }
-
-    private static void AddAccessMiddlewares(this WebApplication app)
+    private static void AddMiddlewares(this WebApplication app)
     {
         app.UseAuthorization();
+        app.UseMiddleware<ApiKeyMiddleware>();
     }
     
     private static void AddCorsRules(this WebApplication app)

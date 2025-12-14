@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using api.CZ.Data.AbstractModels;
+using api.CZ.Features.Administrators.Models;
 
 namespace api.scaffold;
 

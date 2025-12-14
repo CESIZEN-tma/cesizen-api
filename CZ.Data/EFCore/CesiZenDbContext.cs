@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using api.CZ.Features.Administrators.Models;
 using Microsoft.EntityFrameworkCore;
 using api.scaffold;
 namespace api.CZ.Data.EFCore;

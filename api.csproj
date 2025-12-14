@@ -20,8 +20,4 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="CZ.Features\Users\" />
-  </ItemGroup>
-
 </Project>
