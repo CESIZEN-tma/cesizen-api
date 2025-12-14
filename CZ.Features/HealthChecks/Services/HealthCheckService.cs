@@ -51,7 +51,6 @@ public class HealthCheckService : IHealthCheckService
         if (overallStatus == "Unhealthy")
         {
             _logger.LogWarning("Health check failed: {Status}", overallStatus);
-            return Result.Failure<HealthCheckResponse>("The system is not healthy");
         }
 
         return Result.Success(response);
