@@ -1,5 +1,8 @@
 using System.Text;
+using api.CZ.Data.EFCore;
+using api.CZ.Features.HealthChecks.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
@@ -20,7 +23,7 @@ public static class DependenciesExtensions
 
     private static void AddServices(this WebApplicationBuilder builder)
     {
-        return;
+        builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
     }
 
     private static void AddRepositories(this WebApplicationBuilder builder)
@@ -47,7 +50,7 @@ public static class DependenciesExtensions
                 options.TokenValidationParameters = new TokenValidationParameters()
                 {
                     ValidateIssuer = false,
-                    ValidateAudience = false, 
+                    ValidateAudience = false,
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key)
                 };
@@ -67,16 +70,23 @@ public static class DependenciesExtensions
 
     private static void AddEfCoreConfiguration(this WebApplicationBuilder builder)
     {
-        return;
+        var connectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING")
+                               ?? throw new InvalidOperationException(
+                                   "Connection string 'DATABASE_CONNECTION_STRING' not found.");
+
+        builder.Services.AddDbContext<CesiZenDbContext>(options =>
+            options.UseNpgsql(
+                connectionString,
+                npgsqlOptions => npgsqlOptions.CommandTimeout(30)));
     }
 
     private static void AddCorsConfiguration(this WebApplicationBuilder builder)
     {
         var clientUrl = Environment.GetEnvironmentVariable("URL_CLIENT") ??
-                           throw new InvalidOperationException("Client app URL 'URL_CLIENT' not found.");
+                        throw new InvalidOperationException("Client app URL 'URL_CLIENT' not found.");
 
         var backofficeUrl = Environment.GetEnvironmentVariable("URL_BACKOFFICE") ??
-                               throw new InvalidOperationException("Backlog URL 'URL_BACKOFFICE' not found.");
+                            throw new InvalidOperationException("Backlog URL 'URL_BACKOFFICE' not found.");
 
         builder.Services.AddCors(options =>
         {

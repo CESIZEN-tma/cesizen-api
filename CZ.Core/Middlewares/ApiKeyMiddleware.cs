@@ -30,7 +30,9 @@ public class ApiKeyMiddleware
     {
         // Allow anonymous endpoints
         var endpoint = context.GetEndpoint();
-        if (endpoint?.Metadata.GetMetadata<AllowAnonymousAttribute>() != null)
+        var isPublic = context.Request.Path.ToString().ToLower().Contains("public");
+        var isSwagger = context.Request.Path.ToString().ToLower().Contains("swagger");
+        if (isSwagger || isPublic)
         {
             await _next(context);
             return;
