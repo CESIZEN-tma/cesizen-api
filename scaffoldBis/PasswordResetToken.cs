@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using api.CZ.Data.AbstractModels;
 
-namespace api.scaffold;
+namespace api.scaffoldBis;
 
-public partial class PasswordResetToken : SoftDeletableEntity
+public partial class PasswordResetToken
 {
+    public Guid Id { get; set; }
 
     public string Token { get; set; } = null!;
 
@@ -13,8 +13,14 @@ public partial class PasswordResetToken : SoftDeletableEntity
 
     public bool Consumed { get; set; }
 
-    public bool? ConsumedAt { get; set; }
-    
+    public DateTime? ConsumedAt { get; set; }
+
+    public DateTime CreationTime { get; set; }
+
+    public DateTime? UpdateTime { get; set; }
+
+    public DateTime? DeletionTime { get; set; }
+
     public Guid IdPasswordsInfos { get; set; }
 
     public virtual PasswordsInfo IdPasswordsInfosNavigation { get; set; } = null!;

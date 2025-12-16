@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using api.CZ.Data.AbstractModels;
 using api.CZ.Features.Administrators.Models;
 
-namespace api.scaffold;
+namespace api.scaffoldBis;
 
-public partial class InformationPage : SoftDeletableEntity
+public partial class InformationPage
 {
+    public Guid Id { get; set; }
 
     public string Title { get; set; } = null!;
 
@@ -21,7 +21,13 @@ public partial class InformationPage : SoftDeletableEntity
     public string Status { get; set; } = null!;
 
     public bool Active { get; set; }
-    
+
+    public DateTime CreationTime { get; set; }
+
+    public DateTime? UpdateTime { get; set; }
+
+    public DateTime? DeletionTime { get; set; }
+
     public Guid IdAdministrators { get; set; }
 
     public virtual Administrator IdAdministratorsNavigation { get; set; } = null!;

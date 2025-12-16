@@ -1,16 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using api.CZ.Data.AbstractModels;
 
-namespace api.scaffold;
+namespace api.scaffoldBis;
 
-public partial class Question : SoftDeletableEntity
+public partial class Question
 {
+    public Guid Id { get; set; }
 
     public string Text { get; set; } = null!;
 
     public int Position { get; set; }
-    
+
+    public DateTime CreationTime { get; set; }
+
+    public DateTime? UpdateTime { get; set; }
+
+    public DateTime? DeletionTime { get; set; }
+
     public Guid IdQuizz { get; set; }
 
     public virtual Quizz IdQuizzNavigation { get; set; } = null!;

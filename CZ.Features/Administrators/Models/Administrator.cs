@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using api.CZ.Data.AbstractModels;
-using api.scaffold;
+
+using api.scaffoldBis;
 
 namespace api.CZ.Features.Administrators.Models;
 
-public partial class Administrator : SoftDeletableEntity
+public partial class Administrator
 {
+    public Guid Id { get; set; }
 
     public string Email { get; set; } = null!;
 
@@ -20,19 +21,23 @@ public partial class Administrator : SoftDeletableEntity
 
     public string? ThumbnailUrl { get; set; }
 
-    public DateTime LockedUntil { get; set; }
+    public DateTime? LockedUntil { get; set; }
 
     public bool AccountActivated { get; set; }
-    
-    public Guid IdAdminLogs { get; set; }
 
-    public Guid IdNavigationMenu { get; set; }
+    public DateTime CreationTime { get; set; }
+
+    public DateTime? UpdateTime { get; set; }
+
+    public DateTime? DeletionTime { get; set; }
+
+    public Guid? IdNavigationMenu { get; set; }
+
+    public virtual ICollection<AdminLog> AdminLogs { get; set; } = new List<AdminLog>();
 
     public virtual ICollection<Configuration> Configurations { get; set; } = new List<Configuration>();
 
-    public virtual AdminLog IdAdminLogsNavigation { get; set; } = null!;
-
-    public virtual NavigationMenu IdNavigationMenuNavigation { get; set; } = null!;
+    public virtual NavigationMenu? IdNavigationMenuNavigation { get; set; }
 
     public virtual ICollection<InformationPage> InformationPages { get; set; } = new List<InformationPage>();
 

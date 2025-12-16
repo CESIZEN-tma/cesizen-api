@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using api.CZ.Data.AbstractModels;
 using api.CZ.Features.Administrators.Models;
 
-namespace api.scaffold;
+namespace api.scaffoldBis;
 
-public partial class NavigationMenu : SoftDeletableEntity
+public partial class NavigationMenu
 {
+    public Guid Id { get; set; }
 
     public int Position { get; set; }
 
@@ -15,6 +15,12 @@ public partial class NavigationMenu : SoftDeletableEntity
     public string Url { get; set; } = null!;
 
     public bool CurrentlyEditing { get; set; }
-    
+
+    public DateTime CreationTime { get; set; }
+
+    public DateTime? UpdateTime { get; set; }
+
+    public DateTime? DeletionTime { get; set; }
+
     public virtual ICollection<Administrator> Administrators { get; set; } = new List<Administrator>();
 }

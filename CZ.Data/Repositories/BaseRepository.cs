@@ -14,195 +14,70 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
         _dbSet = context.Set<TEntity>();
     }
 
-    // === Query Operations ===
-
-    public virtual async Task<TEntity?> GetByIdAsync(object id, CancellationToken cancellationToken = default)
+    public virtual async Task<TEntity> AddAsync(TEntity model, CancellationToken cancellationToken = default)
     {
-        return await _dbSet.FindAsync(new[] { id }, cancellationToken);
+        _context.Set<TEntity>().Add(model);
+
+        await SaveChangesAsync(cancellationToken);
+
+        return model;
     }
 
-    public virtual TEntity? GetById(object id)
+    public virtual async Task UpdateAsync(TEntity model, CancellationToken cancellationToken = default)
     {
-        return _dbSet.Find(id);
+        _context?.Set<TEntity>().Update(model);
+        await SaveChangesAsync(cancellationToken);
     }
 
-    public virtual async Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken cancellationToken = default)
+    public virtual async Task DeleteAsync(TEntity model, CancellationToken cancellationToken = default)
     {
-        return await _dbSet.ToListAsync(cancellationToken);
+        _context.Set<TEntity>().Remove(model);
+        await SaveChangesAsync(cancellationToken);
     }
 
-    public virtual IEnumerable<TEntity> GetAll()
+    public virtual async Task SoftDeleteAsync(TEntity model, CancellationToken cancellationToken = default)
     {
-        return _dbSet.ToList();
+        _context.Set<TEntity>().Update(model);
+        await SaveChangesAsync(cancellationToken);
     }
 
-    public virtual async Task<IEnumerable<TEntity>> FindAsync(
-        Expression<Func<TEntity, bool>> predicate, 
-        CancellationToken cancellationToken = default)
+    protected async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        return await _dbSet.Where(predicate).ToListAsync(cancellationToken);
+        return await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public virtual IEnumerable<TEntity> Find(Expression<Func<TEntity, bool>> predicate)
+    public virtual async Task<TEntity?> FindAsync<TId>(TId id, CancellationToken cancellationToken = default) where TId : notnull
     {
-        return _dbSet.Where(predicate).ToList();
+        return await _context.FindAsync<TEntity>([id], cancellationToken);
     }
 
-    public virtual async Task<TEntity?> FirstOrDefaultAsync(
-        Expression<Func<TEntity, bool>> predicate, 
-        CancellationToken cancellationToken = default)
+    public virtual async Task<List<TEntity>> ListAsync(CancellationToken cancellationToken = default)
     {
-        return await _dbSet.FirstOrDefaultAsync(predicate, cancellationToken);
+        return await _context.Set<TEntity>().ToListAsync(cancellationToken);
     }
 
-    public virtual TEntity? FirstOrDefault(Expression<Func<TEntity, bool>> predicate)
+    public virtual async Task<List<TEntity>> ListAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
     {
-        return _dbSet.FirstOrDefault(predicate);
+        return await _context.Set<TEntity>().Where(predicate).ToListAsync(cancellationToken);
     }
 
-    public virtual async Task<bool> AnyAsync(
-        Expression<Func<TEntity, bool>> predicate, 
-        CancellationToken cancellationToken = default)
+    public virtual async Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
     {
-        return await _dbSet.AnyAsync(predicate, cancellationToken);
+        return await _context.Set<TEntity>().AnyAsync(predicate, cancellationToken);
     }
 
-    public virtual bool Any(Expression<Func<TEntity, bool>> predicate)
+    public virtual async Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
     {
-        return _dbSet.Any(predicate);
+        return await _context.Set<TEntity>().Where(predicate).CountAsync(cancellationToken);
     }
 
-    public virtual async Task<int> CountAsync(
-        Expression<Func<TEntity, bool>>? predicate = null, 
-        CancellationToken cancellationToken = default)
+    public virtual async Task<int> CountAsync(CancellationToken cancellationToken = default)
     {
-        return predicate == null 
-            ? await _dbSet.CountAsync(cancellationToken)
-            : await _dbSet.CountAsync(predicate, cancellationToken);
+        return await _context.Set<TEntity>().CountAsync(cancellationToken);
     }
 
-    public virtual int Count(Expression<Func<TEntity, bool>>? predicate = null)
+    public virtual async Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
     {
-        return predicate == null 
-            ? _dbSet.Count()
-            : _dbSet.Count(predicate);
-    }
-
-    // === Create Operations (auto-save) ===
-
-    public virtual async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default)
-    {
-        await _dbSet.AddAsync(entity, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
-        return entity;
-    }
-
-    public virtual TEntity Add(TEntity entity)
-    {
-        _dbSet.Add(entity);
-        _context.SaveChanges();
-        return entity;
-    }
-
-    public virtual async Task AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
-    {
-        await _dbSet.AddRangeAsync(entities, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
-    }
-
-    public virtual void AddRange(IEnumerable<TEntity> entities)
-    {
-        _dbSet.AddRange(entities);
-        _context.SaveChanges();
-    }
-
-    // === Update Operations (auto-save) ===
-
-    public virtual async Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
-    {
-        _dbSet.Update(entity);
-        await _context.SaveChangesAsync(cancellationToken);
-    }
-
-    public virtual void Update(TEntity entity)
-    {
-        _dbSet.Update(entity);
-        _context.SaveChanges();
-    }
-
-    public virtual async Task UpdateRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
-    {
-        _dbSet.UpdateRange(entities);
-        await _context.SaveChangesAsync(cancellationToken);
-    }
-
-    public virtual void UpdateRange(IEnumerable<TEntity> entities)
-    {
-        _dbSet.UpdateRange(entities);
-        _context.SaveChanges();
-    }
-
-    // === Delete Operations (auto-save) ===
-
-    public virtual async Task RemoveAsync(TEntity entity, CancellationToken cancellationToken = default)
-    {
-        _dbSet.Remove(entity);
-        await _context.SaveChangesAsync(cancellationToken);
-    }
-
-    public virtual void Remove(TEntity entity)
-    {
-        _dbSet.Remove(entity);
-        _context.SaveChanges();
-    }
-
-    public virtual async Task RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
-    {
-        _dbSet.RemoveRange(entities);
-        await _context.SaveChangesAsync(cancellationToken);
-    }
-
-    public virtual void RemoveRange(IEnumerable<TEntity> entities)
-    {
-        _dbSet.RemoveRange(entities);
-        _context.SaveChanges();
-    }
-
-    public virtual async Task<bool> RemoveByIdAsync(object id, CancellationToken cancellationToken = default)
-    {
-        var entity = await GetByIdAsync(id, cancellationToken);
-        if (entity == null)
-            return false;
-
-        _dbSet.Remove(entity);
-        await _context.SaveChangesAsync(cancellationToken);
-        return true;
-    }
-
-    // === Pagination ===
-
-    public virtual async Task<(IEnumerable<TEntity> Items, int TotalCount)> GetPagedAsync(
-        int pageNumber,
-        int pageSize,
-        Expression<Func<TEntity, bool>>? predicate = null,
-        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-        CancellationToken cancellationToken = default)
-    {
-        IQueryable<TEntity> query = _dbSet;
-
-        if (predicate != null)
-            query = query.Where(predicate);
-
-        var totalCount = await query.CountAsync(cancellationToken);
-
-        if (orderBy != null)
-            query = orderBy(query);
-
-        var items = await query
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync(cancellationToken);
-
-        return (items, totalCount);
+        return await _context.Set<TEntity>().FirstOrDefaultAsync(predicate, cancellationToken);
     }
 }

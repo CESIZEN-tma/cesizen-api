@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using api.CZ.Data.AbstractModels;
+using api.CZ.Features.Users.Models;
 
-namespace api.scaffold;
+namespace api.scaffoldBis;
 
-public partial class UserSavedConfiguration : SoftDeletableEntity
+public partial class UserSavedConfiguration
 {
+    public Guid Id { get; set; }
 
     public string Name { get; set; } = null!;
 
@@ -24,6 +25,12 @@ public partial class UserSavedConfiguration : SoftDeletableEntity
     public string Objective { get; set; } = null!;
 
     public string GuidanceType { get; set; } = null!;
-    
+
+    public DateTime CreationTime { get; set; }
+
+    public DateTime? UpdateTime { get; set; }
+
+    public DateTime? DeletionTime { get; set; }
+
     public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

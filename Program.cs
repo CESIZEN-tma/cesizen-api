@@ -1,6 +1,8 @@
 using api.CZ.Core.Extensions;
 using DotNetEnv;
 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 Env.Load();

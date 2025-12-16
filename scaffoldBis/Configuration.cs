@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using api.CZ.Data.AbstractModels;
 using api.CZ.Features.Administrators.Models;
 
-namespace api.scaffold;
+namespace api.scaffoldBis;
 
-public partial class Configuration : SoftDeletableEntity
+public partial class Configuration
 {
+    public Guid Id { get; set; }
 
     public string Name { get; set; } = null!;
 
@@ -25,7 +25,13 @@ public partial class Configuration : SoftDeletableEntity
     public string Objective { get; set; } = null!;
 
     public string GuidanceType { get; set; } = null!;
-    
+
+    public DateTime CreationTime { get; set; }
+
+    public DateTime? UpdateTime { get; set; }
+
+    public DateTime? DeletionTime { get; set; }
+
     public Guid IdAdministrators { get; set; }
 
     public virtual ICollection<Bookmark> Bookmarks { get; set; } = new List<Bookmark>();
