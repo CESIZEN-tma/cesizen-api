@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using api.CZ.Features.Administrators.Models;
+using api.CZ.Features.EmailConfirmationTokens.Models;
 using api.CZ.Features.Users.Models;
 using Microsoft.EntityFrameworkCore;
 

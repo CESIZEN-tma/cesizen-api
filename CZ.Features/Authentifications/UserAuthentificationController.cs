@@ -27,6 +27,17 @@ public class UserAuthentificationController : ControllerBase
             onFailure: error => BadRequest(new { error })
         );
     }
+    
+    [HttpPut("confirm-account/{token}")]
+    public async Task<IActionResult> ConfirmAccount(string token)
+    {
+        var result = await _service.ConfirmAccount(token);
+
+        return result.Match<IActionResult>(
+            onSuccess: () => Ok(new { message = "Account activated successfully." }),
+            onFailure: error => BadRequest(new { error })
+        );
+    }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)

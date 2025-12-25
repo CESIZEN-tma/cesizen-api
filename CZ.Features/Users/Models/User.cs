@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-
+using api.CZ.Features.EmailConfirmationTokens.Models;
 using api.scaffoldBis;
 
 namespace api.CZ.Features.Users.Models;

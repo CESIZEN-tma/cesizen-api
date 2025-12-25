@@ -22,6 +22,15 @@ public class EmailSender : IEmailSender
             Credentials = new NetworkCredential(sender, senderPassword)
         };
         
-        return client.SendMailAsync(sender, email, subject, message);
+        var mailMessage = new MailMessage
+        {
+            From = new MailAddress(sender),
+            Subject = subject,
+            Body = message,
+            IsBodyHtml = true 
+        };
+        mailMessage.To.Add(email);
+        
+        return client.SendMailAsync(mailMessage);
     }
 }

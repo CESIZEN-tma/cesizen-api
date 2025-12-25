@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using api.CZ.Features.Users.Models;
 
-namespace api.scaffoldBis;
+namespace api.CZ.Features.EmailConfirmationTokens.Models;
 
 public partial class EmailConfirmationToken
 {

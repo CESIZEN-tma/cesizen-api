@@ -7,5 +7,6 @@ namespace api.CZ.Features.Authentifications.Services;
 public interface IAuthentificationService
 {
     Task<Result<SimplyAuthResponse>> Login(LoginDto dto);
+    Task<Result> ConfirmAccount(string token);
     Task<Result> RegisterUser(RegisterDto dto);
 }

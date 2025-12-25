@@ -1,11 +1,17 @@
 using System.Text;
+using api.CZ.Core.Services;
+using api.CZ.Core.Utils;
 using api.CZ.Data.EFCore;
 using api.CZ.Features.Authentifications.Services;
+using api.CZ.Features.EmailConfirmationTokens.Factories;
+using api.CZ.Features.EmailConfirmationTokens.Repositories;
+using api.CZ.Features.EmailConfirmationTokens.Services;
 using api.CZ.Features.HealthChecks.Services;
 using api.CZ.Features.Users.Factories;
 using api.CZ.Features.Users.Repositories;
 using api.CZ.Features.Users.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -34,6 +40,7 @@ public static class DependenciesExtensions
     private static void AddFactories(this WebApplicationBuilder builder)
     {
         builder.Services.AddScoped<IUserFactory, UserFactory>();
+        builder.Services.AddScoped<IEmailConfirmationTokenFactory, EmailConfirmationTokenFactory>();
     }
 
     private static void AddServices(this WebApplicationBuilder builder)
@@ -41,11 +48,15 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
         builder.Services.AddScoped<IAuthentificationService, AuthentificationService>();
         builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<IEmailSender, EmailSender>();
+        builder.Services.AddScoped<IEmailConfirmationTokenService, EmailConfirmationTokenService>();
     }
 
     private static void AddRepositories(this WebApplicationBuilder builder)
     {
         builder.Services.AddScoped<IUserRepository, UserRepository>();
+        builder.Services.AddScoped<IEmailConfirmationTokenRepository, EmailConfirmationTokenRepository>();
     }
     
     private static void AddSimply(this WebApplicationBuilder builder, int memorySize, int iterations,
@@ -54,7 +65,7 @@ public static class DependenciesExtensions
         string jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") 
                            ?? throw new Exception("JWT_SECRET not found");
 
-        // 1. Appeler AddSimplyAuth normalement
+        
         builder.Services.AddSimplyAuth(
             argon2 =>
             {
@@ -68,15 +79,13 @@ public static class DependenciesExtensions
                 jwt.Issuer = issuer;
                 jwt.Audience = audience;
             });
-
-        // 2. Supprimer l'enregistrement problématique
+        
         var descriptor = builder.Services.FirstOrDefault(d => 
             d.ServiceType == typeof(ISimplyPasswordHasher));
     
         if (descriptor != null)
             builder.Services.Remove(descriptor);
-
-        // 3. Réenregistrer avec le bon constructeur
+        
         builder.Services.AddSingleton<ISimplyPasswordHasher>(sp =>
         {
             var options = sp.GetRequiredService<IOptions<SimplyArgon2Options>>();

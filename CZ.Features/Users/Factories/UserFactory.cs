@@ -7,7 +7,7 @@ public class UserFactory : BaseFactory<User>, IUserFactory
 {
     protected override User CreateInstance(params object[] parameters)
     {
-        // Défault création
+        // Default création
         if (parameters.Length == 0)
         {
             return new User
