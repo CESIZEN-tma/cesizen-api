@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using api.CZ.Features.Users.Models;
 
-namespace api.scaffoldBis;
+namespace api.CZ.Features.PasswordResetTokens.Models;
 
-public partial class PasswordResetToken
+public class PasswordResetToken
 {
     public Guid Id { get; set; }
 
@@ -21,7 +22,7 @@ public partial class PasswordResetToken
 
     public DateTime? DeletionTime { get; set; }
 
-    public Guid IdPasswordsInfos { get; set; }
+    public Guid IdUsers { get; set; }
 
-    public virtual PasswordsInfo IdPasswordsInfosNavigation { get; set; } = null!;
+    public virtual User IdUsersNavigation { get; set; } = null!;
 }
