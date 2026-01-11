@@ -7,6 +7,12 @@ using api.CZ.Features.EmailConfirmationTokens.Factories;
 using api.CZ.Features.EmailConfirmationTokens.Repositories;
 using api.CZ.Features.EmailConfirmationTokens.Services;
 using api.CZ.Features.HealthChecks.Services;
+using api.CZ.Features.PasswordResetTokens.Factories;
+using api.CZ.Features.PasswordResetTokens.Repositories;
+using api.CZ.Features.PasswordResetTokens.Services;
+using api.CZ.Features.Sessions.Factories;
+using api.CZ.Features.Sessions.Repositories;
+using api.CZ.Features.Sessions.Services;
 using api.CZ.Features.Users.Factories;
 using api.CZ.Features.Users.Repositories;
 using api.CZ.Features.Users.Services;
@@ -41,6 +47,8 @@ public static class DependenciesExtensions
     {
         builder.Services.AddScoped<IUserFactory, UserFactory>();
         builder.Services.AddScoped<IEmailConfirmationTokenFactory, EmailConfirmationTokenFactory>();
+        builder.Services.AddScoped<IPasswordResetTokenFactory, PasswordResetTokenFactory>();
+        builder.Services.AddScoped<ISessionFactory, SessionFactory>();
     }
 
     private static void AddServices(this WebApplicationBuilder builder)
@@ -51,12 +59,16 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<IEmailSender, EmailSender>();
         builder.Services.AddScoped<IEmailConfirmationTokenService, EmailConfirmationTokenService>();
+        builder.Services.AddScoped<IPasswordResetTokenService, PasswordResetTokenService>();
+        builder.Services.AddScoped<ISessionService, SessionService>();
     }
 
     private static void AddRepositories(this WebApplicationBuilder builder)
     {
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IEmailConfirmationTokenRepository, EmailConfirmationTokenRepository>();
+        builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
+        builder.Services.AddScoped<ISessionRepository, SessionRepository>();
     }
     
     private static void AddSimply(this WebApplicationBuilder builder, int memorySize, int iterations,

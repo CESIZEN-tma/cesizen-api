@@ -3,7 +3,8 @@
     "allow": [
       "Bash(dotnet build:*)",
       "Bash(curl:*)",
-      "Bash(docker exec:*)"
+      "Bash(docker exec:*)",
+      "Bash(dotnet test:*)"
     ]
   }
 }

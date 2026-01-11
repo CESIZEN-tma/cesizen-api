@@ -49,4 +49,48 @@ public class UserAuthentificationController : ControllerBase
             onFailure: error => Unauthorized(new { error })
         );
     }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+    {
+        var result = await _service.ForgotPassword(dto);
+
+        return result.Match<IActionResult>(
+            onSuccess: () => Ok(new { message = "If an account with that email exists, a password reset link has been sent." }),
+            onFailure: error => BadRequest(new { error })
+        );
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        var result = await _service.ResetPassword(dto);
+
+        return result.Match<IActionResult>(
+            onSuccess: () => Ok(new { message = "Password has been reset successfully. You can now login with your new password." }),
+            onFailure: error => BadRequest(new { error })
+        );
+    }
+
+    [HttpPost("refresh-token")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto dto)
+    {
+        var result = await _service.RefreshToken(dto);
+
+        return result.Match<IActionResult>(
+            onSuccess: tokens => Ok(tokens),
+            onFailure: error => Unauthorized(new { error })
+        );
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout([FromBody] RefreshTokenDto dto)
+    {
+        var result = await _service.Logout(dto.RefreshToken);
+
+        return result.Match<IActionResult>(
+            onSuccess: () => Ok(new { message = "Logged out successfully." }),
+            onFailure: error => BadRequest(new { error })
+        );
+    }
 }

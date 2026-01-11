@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using api.CZ.Features.Administrators.Models;
 using api.CZ.Features.EmailConfirmationTokens.Models;
+using api.CZ.Features.PasswordResetTokens.Models;
 using api.CZ.Features.Users.Models;
 using Microsoft.EntityFrameworkCore;
+using Session = api.CZ.Features.Sessions.Models.Session;
 
 using api.scaffoldBis;
 
@@ -344,14 +346,14 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.CreationTime).HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
             entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
-            entity.Property(e => e.IdPasswordsInfos).HasColumnName("id_passwords_infos");
+            entity.Property(e => e.IdUsers).HasColumnName("id_users");
             entity.Property(e => e.Token).HasColumnName("token");
             entity.Property(e => e.UpdateTime).HasColumnName("update_time");
 
-            entity.HasOne(d => d.IdPasswordsInfosNavigation).WithMany(p => p.PasswordResetTokens)
-                .HasForeignKey(d => d.IdPasswordsInfos)
+            entity.HasOne(d => d.IdUsersNavigation).WithMany(p => p.PasswordResetTokens)
+                .HasForeignKey(d => d.IdUsers)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("password_reset_tokens_id_passwords_infos_fk");
+                .HasConstraintName("password_reset_tokens_id_users_fk");
         });
 
         modelBuilder.Entity<PasswordsInfo>(entity =>

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Session = api.CZ.Features.Sessions.Models.Session;
 
 using api.scaffoldBis;
 

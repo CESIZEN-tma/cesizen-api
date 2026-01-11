@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using api.CZ.Features.EmailConfirmationTokens.Models;
+using api.CZ.Features.PasswordResetTokens.Models;
+using Session = api.CZ.Features.Sessions.Models.Session;
 using api.scaffoldBis;
 
 namespace api.CZ.Features.Users.Models;
@@ -40,6 +42,8 @@ public partial class User
     public virtual ICollection<EmailConfirmationToken> EmailConfirmationTokens { get; set; } = new List<EmailConfirmationToken>();
 
     public virtual UserSavedConfiguration? IdUserSavedConfigurationsNavigation { get; set; }
+
+    public virtual ICollection<PasswordResetToken> PasswordResetTokens { get; set; } = new List<PasswordResetToken>();
 
     public virtual ICollection<Session> Sessions { get; set; } = new List<Session>();
 }

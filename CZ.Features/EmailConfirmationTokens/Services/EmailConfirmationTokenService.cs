@@ -21,7 +21,7 @@ public class EmailConfirmationTokenService : IEmailConfirmationTokenService
     public async Task<EmailConfirmationToken?> GetEntityByToken(string token)
     {
         var foundToken = await _repository.FirstOrDefaultAsync(t => t.Token == token);
-        return !foundToken.Consumed ? foundToken : null;
+        return foundToken != null && !foundToken.Consumed ? foundToken : null;
     }
         
     public async Task<EmailConfirmationToken> NewToken(Guid userId)
