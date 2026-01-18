@@ -2,6 +2,17 @@ using System.Text;
 using api.CZ.Core.Services;
 using api.CZ.Core.Utils;
 using api.CZ.Data.EFCore;
+using api.CZ.Features.AdminEmailConfirmationTokens.Factories;
+using api.CZ.Features.AdminEmailConfirmationTokens.Repositories;
+using api.CZ.Features.AdminEmailConfirmationTokens.Services;
+using api.CZ.Features.AdminPasswordResetTokens.Factories;
+using api.CZ.Features.AdminPasswordResetTokens.Repositories;
+using api.CZ.Features.AdminPasswordResetTokens.Services;
+using api.CZ.Features.AdminSessions.Factories;
+using api.CZ.Features.AdminSessions.Repositories;
+using api.CZ.Features.AdminSessions.Services;
+using api.CZ.Features.Administrators.Factories;
+using api.CZ.Features.Administrators.Repositories;
 using api.CZ.Features.Authentifications.Services;
 using api.CZ.Features.EmailConfirmationTokens.Factories;
 using api.CZ.Features.EmailConfirmationTokens.Repositories;
@@ -45,30 +56,53 @@ public static class DependenciesExtensions
 
     private static void AddFactories(this WebApplicationBuilder builder)
     {
+        // User factories
         builder.Services.AddScoped<IUserFactory, UserFactory>();
         builder.Services.AddScoped<IEmailConfirmationTokenFactory, EmailConfirmationTokenFactory>();
         builder.Services.AddScoped<IPasswordResetTokenFactory, PasswordResetTokenFactory>();
         builder.Services.AddScoped<ISessionFactory, SessionFactory>();
+
+        // Admin factories
+        builder.Services.AddScoped<IAdministratorFactory, AdministratorFactory>();
+        builder.Services.AddScoped<IAdminEmailConfirmationTokenFactory, AdminEmailConfirmationTokenFactory>();
+        builder.Services.AddScoped<IAdminPasswordResetTokenFactory, AdminPasswordResetTokenFactory>();
+        builder.Services.AddScoped<IAdminSessionFactory, AdminSessionFactory>();
     }
 
     private static void AddServices(this WebApplicationBuilder builder)
     {
+        // Common services
         builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
-        builder.Services.AddScoped<IAuthentificationService, AuthentificationService>();
-        builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<IEmailSender, EmailSender>();
+
+        // User services
+        builder.Services.AddScoped<IAuthentificationService, AuthentificationService>();
+        builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IEmailConfirmationTokenService, EmailConfirmationTokenService>();
         builder.Services.AddScoped<IPasswordResetTokenService, PasswordResetTokenService>();
         builder.Services.AddScoped<ISessionService, SessionService>();
+
+        // Admin services
+        builder.Services.AddScoped<IAdminAuthentificationService, AdminAuthentificationService>();
+        builder.Services.AddScoped<IAdminEmailConfirmationTokenService, AdminEmailConfirmationTokenService>();
+        builder.Services.AddScoped<IAdminPasswordResetTokenService, AdminPasswordResetTokenService>();
+        builder.Services.AddScoped<IAdminSessionService, AdminSessionService>();
     }
 
     private static void AddRepositories(this WebApplicationBuilder builder)
     {
+        // User repositories
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<IEmailConfirmationTokenRepository, EmailConfirmationTokenRepository>();
         builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
         builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+
+        // Admin repositories
+        builder.Services.AddScoped<IAdministratorRepository, AdministratorRepository>();
+        builder.Services.AddScoped<IAdminEmailConfirmationTokenRepository, AdminEmailConfirmationTokenRepository>();
+        builder.Services.AddScoped<IAdminPasswordResetTokenRepository, AdminPasswordResetTokenRepository>();
+        builder.Services.AddScoped<IAdminSessionRepository, AdminSessionRepository>();
     }
     
     private static void AddSimply(this WebApplicationBuilder builder, int memorySize, int iterations,

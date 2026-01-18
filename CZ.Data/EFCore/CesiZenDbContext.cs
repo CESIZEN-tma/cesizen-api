@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using api.CZ.Features.Administrators.Models;
+using api.CZ.Features.AdminEmailConfirmationTokens.Models;
+using api.CZ.Features.AdminPasswordResetTokens.Models;
+using api.CZ.Features.AdminSessions.Models;
 using api.CZ.Features.EmailConfirmationTokens.Models;
 using api.CZ.Features.PasswordResetTokens.Models;
 using api.CZ.Features.Users.Models;
@@ -21,6 +24,12 @@ public partial class CesiZenDbContext : DbContext
     public virtual DbSet<AdminLog> AdminLogs { get; set; }
 
     public virtual DbSet<Administrator> Administrators { get; set; }
+
+    public virtual DbSet<AdminEmailConfirmationToken> AdminEmailConfirmationTokens { get; set; }
+
+    public virtual DbSet<AdminPasswordResetToken> AdminPasswordResetTokens { get; set; }
+
+    public virtual DbSet<AdminSession> AdminSessions { get; set; }
 
     public virtual DbSet<Bookmark> Bookmarks { get; set; }
 
@@ -135,6 +144,79 @@ public partial class CesiZenDbContext : DbContext
                         j.IndexerProperty<Guid>("Id").HasColumnName("id");
                         j.IndexerProperty<Guid>("IdSession").HasColumnName("id_session");
                     });
+        });
+
+        modelBuilder.Entity<AdminEmailConfirmationToken>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("admin_email_confirmation_tokens_pk");
+
+            entity.ToTable("admin_email_confirmation_tokens");
+
+            entity.Property(e => e.Id)
+                .ValueGeneratedNever()
+                .HasColumnName("id");
+            entity.Property(e => e.Consumed).HasColumnName("consumed");
+            entity.Property(e => e.ConsumedAt).HasColumnName("consumed_at");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+            entity.Property(e => e.IdAdministrators).HasColumnName("id_administrators");
+            entity.Property(e => e.Token).HasColumnName("token");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
+
+            entity.HasOne(d => d.IdAdministratorsNavigation).WithMany(p => p.AdminEmailConfirmationTokens)
+                .HasForeignKey(d => d.IdAdministrators)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("admin_email_confirmation_tokens_id_administrators_fk");
+        });
+
+        modelBuilder.Entity<AdminPasswordResetToken>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("admin_password_reset_tokens_pk");
+
+            entity.ToTable("admin_password_reset_tokens");
+
+            entity.HasIndex(e => e.Token, "admin_token_idx");
+
+            entity.Property(e => e.Id)
+                .ValueGeneratedNever()
+                .HasColumnName("id");
+            entity.Property(e => e.Consumed).HasColumnName("consumed");
+            entity.Property(e => e.ConsumedAt).HasColumnName("consumed_at");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+            entity.Property(e => e.IdAdministrators).HasColumnName("id_administrators");
+            entity.Property(e => e.Token).HasColumnName("token");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
+
+            entity.HasOne(d => d.IdAdministratorsNavigation).WithMany(p => p.AdminPasswordResetTokens)
+                .HasForeignKey(d => d.IdAdministrators)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("admin_password_reset_tokens_id_administrators_fk");
+        });
+
+        modelBuilder.Entity<AdminSession>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("admin_session_pk");
+
+            entity.ToTable("admin_session");
+
+            entity.Property(e => e.Id)
+                .ValueGeneratedNever()
+                .HasColumnName("id");
+            entity.Property(e => e.Consumed).HasColumnName("consumed");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+            entity.Property(e => e.IdAdministrators).HasColumnName("id_administrators");
+            entity.Property(e => e.Token).HasColumnName("token");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
+
+            entity.HasOne(d => d.IdAdministratorsNavigation).WithMany(p => p.AdminSessions)
+                .HasForeignKey(d => d.IdAdministrators)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("admin_session_id_administrators_fk");
         });
 
         modelBuilder.Entity<Bookmark>(entity =>

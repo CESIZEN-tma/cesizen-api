@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using api.CZ.Features.AdminEmailConfirmationTokens.Models;
+using api.CZ.Features.AdminPasswordResetTokens.Models;
+using api.CZ.Features.AdminSessions.Models;
 using Session = api.CZ.Features.Sessions.Models.Session;
 
 using api.scaffoldBis;
@@ -43,4 +46,10 @@ public partial class Administrator
     public virtual ICollection<InformationPage> InformationPages { get; set; } = new List<InformationPage>();
 
     public virtual ICollection<Session> IdSessions { get; set; } = new List<Session>();
+
+    public virtual ICollection<AdminEmailConfirmationToken> AdminEmailConfirmationTokens { get; set; } = new List<AdminEmailConfirmationToken>();
+
+    public virtual ICollection<AdminPasswordResetToken> AdminPasswordResetTokens { get; set; } = new List<AdminPasswordResetToken>();
+
+    public virtual ICollection<AdminSession> AdminSessions { get; set; } = new List<AdminSession>();
 }

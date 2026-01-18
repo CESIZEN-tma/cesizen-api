@@ -4,7 +4,11 @@
       "Bash(dotnet build:*)",
       "Bash(curl:*)",
       "Bash(docker exec:*)",
-      "Bash(dotnet test:*)"
+      "Bash(dotnet test:*)",
+      "Bash(dotnet ef migrations add:*)",
+      "Bash(dotnet ef database update:*)",
+      "Bash(dotnet ef migrations:*)",
+      "Bash(dotnet run:*)"
     ]
   }
 }
