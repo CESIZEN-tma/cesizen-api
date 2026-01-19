@@ -3,6 +3,10 @@ using api.CZ.Features.Users.Models;
 using api.CZ.Features.Sessions.Models;
 using api.CZ.Features.EmailConfirmationTokens.Models;
 using api.CZ.Features.PasswordResetTokens.Models;
+using api.CZ.Features.Administrators.Models;
+using api.CZ.Features.AdminSessions.Models;
+using api.CZ.Features.AdminEmailConfirmationTokens.Models;
+using api.CZ.Features.AdminPasswordResetTokens.Models;
 
 namespace api.Tests.Builders;
 
@@ -203,6 +207,197 @@ public static class TestDataBuilder
         public static PasswordResetToken BuildValid(Guid? userId = null)
         {
             return Build(userId, t =>
+            {
+                t.Consumed = false;
+                t.ExpiresAt = DateTime.UtcNow.AddMinutes(30);
+            });
+        }
+    }
+
+    public static class Administrators
+    {
+        public static Administrator Build(Action<Administrator>? configure = null)
+        {
+            var admin = new Administrator
+            {
+                Id = Guid.NewGuid(),
+                Email = Faker.Internet.Email(),
+                PasswordHash = Faker.Random.AlphaNumeric(60),
+                FirstName = Faker.Name.FirstName(),
+                LastName = Faker.Name.LastName(),
+                MemberSince = Faker.Date.Past(2),
+                ThumbnailUrl = Faker.Internet.Avatar(),
+                LockedUntil = null,
+                AccountActivated = true,
+                CreationTime = DateTime.UtcNow,
+                UpdateTime = null,
+                DeletionTime = null,
+                IdNavigationMenu = null
+            };
+
+            configure?.Invoke(admin);
+            return admin;
+        }
+
+        public static List<Administrator> BuildMany(int count, Action<Administrator>? configure = null)
+        {
+            return Enumerable.Range(0, count).Select(_ => Build(configure)).ToList();
+        }
+
+        public static Administrator BuildUnactivated()
+        {
+            return Build(a => a.AccountActivated = false);
+        }
+
+        public static Administrator BuildLocked(DateTime? until = null)
+        {
+            return Build(a => a.LockedUntil = until ?? DateTime.UtcNow.AddHours(1));
+        }
+
+        public static Administrator BuildDeleted()
+        {
+            return Build(a => a.DeletionTime = DateTime.UtcNow.AddMinutes(-10));
+        }
+    }
+
+    public static class AdminSessions
+    {
+        public static AdminSession Build(Guid? adminId = null, Action<AdminSession>? configure = null)
+        {
+            var session = new AdminSession
+            {
+                Id = Guid.NewGuid(),
+                Token = Faker.Random.AlphaNumeric(64),
+                Consumed = false,
+                ExpiresAt = DateTime.UtcNow.AddDays(30),
+                CreationTime = DateTime.UtcNow,
+                UpdateTime = null,
+                DeletionTime = null,
+                IdAdministrators = adminId ?? Guid.NewGuid()
+            };
+
+            configure?.Invoke(session);
+            return session;
+        }
+
+        public static List<AdminSession> BuildMany(int count, Guid? adminId = null, Action<AdminSession>? configure = null)
+        {
+            return Enumerable.Range(0, count).Select(_ => Build(adminId, configure)).ToList();
+        }
+
+        public static AdminSession BuildExpired(Guid? adminId = null)
+        {
+            return Build(adminId, s => s.ExpiresAt = DateTime.UtcNow.AddDays(-1));
+        }
+
+        public static AdminSession BuildConsumed(Guid? adminId = null)
+        {
+            return Build(adminId, s => s.Consumed = true);
+        }
+
+        public static AdminSession BuildValid(Guid? adminId = null)
+        {
+            return Build(adminId, s =>
+            {
+                s.Consumed = false;
+                s.ExpiresAt = DateTime.UtcNow.AddDays(7);
+            });
+        }
+    }
+
+    public static class AdminEmailConfirmationTokens
+    {
+        public static AdminEmailConfirmationToken Build(Guid? adminId = null, Action<AdminEmailConfirmationToken>? configure = null)
+        {
+            var token = new AdminEmailConfirmationToken
+            {
+                Id = Guid.NewGuid(),
+                Token = Faker.Random.AlphaNumeric(64),
+                ExpiresAt = DateTime.UtcNow.AddHours(24),
+                Consumed = false,
+                ConsumedAt = null,
+                CreationTime = DateTime.UtcNow,
+                UpdateTime = null,
+                DeletionTime = null,
+                IdAdministrators = adminId ?? Guid.NewGuid()
+            };
+
+            configure?.Invoke(token);
+            return token;
+        }
+
+        public static List<AdminEmailConfirmationToken> BuildMany(int count, Guid? adminId = null, Action<AdminEmailConfirmationToken>? configure = null)
+        {
+            return Enumerable.Range(0, count).Select(_ => Build(adminId, configure)).ToList();
+        }
+
+        public static AdminEmailConfirmationToken BuildExpired(Guid? adminId = null)
+        {
+            return Build(adminId, t => t.ExpiresAt = DateTime.UtcNow.AddHours(-1));
+        }
+
+        public static AdminEmailConfirmationToken BuildConsumed(Guid? adminId = null)
+        {
+            return Build(adminId, t =>
+            {
+                t.Consumed = true;
+                t.ConsumedAt = DateTime.UtcNow.AddHours(-1);
+            });
+        }
+
+        public static AdminEmailConfirmationToken BuildValid(Guid? adminId = null)
+        {
+            return Build(adminId, t =>
+            {
+                t.Consumed = false;
+                t.ExpiresAt = DateTime.UtcNow.AddHours(12);
+            });
+        }
+    }
+
+    public static class AdminPasswordResetTokens
+    {
+        public static AdminPasswordResetToken Build(Guid? adminId = null, Action<AdminPasswordResetToken>? configure = null)
+        {
+            var token = new AdminPasswordResetToken
+            {
+                Id = Guid.NewGuid(),
+                Token = Faker.Random.AlphaNumeric(64),
+                ExpiresAt = DateTime.UtcNow.AddHours(1),
+                Consumed = false,
+                ConsumedAt = null,
+                CreationTime = DateTime.UtcNow,
+                UpdateTime = null,
+                DeletionTime = null,
+                IdAdministrators = adminId ?? Guid.NewGuid()
+            };
+
+            configure?.Invoke(token);
+            return token;
+        }
+
+        public static List<AdminPasswordResetToken> BuildMany(int count, Guid? adminId = null, Action<AdminPasswordResetToken>? configure = null)
+        {
+            return Enumerable.Range(0, count).Select(_ => Build(adminId, configure)).ToList();
+        }
+
+        public static AdminPasswordResetToken BuildExpired(Guid? adminId = null)
+        {
+            return Build(adminId, t => t.ExpiresAt = DateTime.UtcNow.AddMinutes(-10));
+        }
+
+        public static AdminPasswordResetToken BuildConsumed(Guid? adminId = null)
+        {
+            return Build(adminId, t =>
+            {
+                t.Consumed = true;
+                t.ConsumedAt = DateTime.UtcNow.AddMinutes(-5);
+            });
+        }
+
+        public static AdminPasswordResetToken BuildValid(Guid? adminId = null)
+        {
+            return Build(adminId, t =>
             {
                 t.Consumed = false;
                 t.ExpiresAt = DateTime.UtcNow.AddMinutes(30);
