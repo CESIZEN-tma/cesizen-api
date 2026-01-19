@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using api.CZ.Features.Authentifications.Services;
 using api.CZ.Features.Authentifications.DTOs;
@@ -15,6 +17,12 @@ public class UserAuthentificationController : ControllerBase
     {
         _service = service;
         _logger = logger;
+    }
+
+    private Guid GetUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return Guid.Parse(userIdClaim!);
     }
 
     [HttpPost("register")]
@@ -90,6 +98,60 @@ public class UserAuthentificationController : ControllerBase
 
         return result.Match<IActionResult>(
             onSuccess: () => Ok(new { message = "Logged out successfully." }),
+            onFailure: error => BadRequest(new { error })
+        );
+    }
+
+    [Authorize]
+    [HttpGet("sessions")]
+    public async Task<IActionResult> GetActiveSessions([FromHeader(Name = "X-Refresh-Token")] string refreshToken)
+    {
+        var userId = GetUserId();
+        var result = await _service.GetActiveSessions(userId, refreshToken);
+
+        return result.Match<IActionResult>(
+            onSuccess: sessions => Ok(sessions),
+            onFailure: error => BadRequest(new { error })
+        );
+    }
+
+    [Authorize]
+    [HttpDelete("sessions/{sessionId:guid}")]
+    public async Task<IActionResult> RevokeSession(Guid sessionId)
+    {
+        var userId = GetUserId();
+        var result = await _service.RevokeSession(userId, sessionId);
+
+        return result.Match<IActionResult>(
+            onSuccess: () => Ok(new { message = "Session revoked successfully." }),
+            onFailure: error => NotFound(new { error })
+        );
+    }
+
+    [Authorize]
+    [HttpDelete("sessions")]
+    public async Task<IActionResult> RevokeAllOtherSessions([FromHeader(Name = "X-Refresh-Token")] string refreshToken)
+    {
+        var userId = GetUserId();
+        var result = await _service.RevokeAllOtherSessions(userId, refreshToken);
+
+        return result.Match<IActionResult>(
+            onSuccess: () => Ok(new { message = "All other sessions revoked successfully." }),
+            onFailure: error => BadRequest(new { error })
+        );
+    }
+
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword(
+        [FromBody] ChangePasswordDto dto,
+        [FromHeader(Name = "X-Refresh-Token")] string refreshToken)
+    {
+        var userId = GetUserId();
+        var result = await _service.ChangePassword(userId, dto, refreshToken);
+
+        return result.Match<IActionResult>(
+            onSuccess: () => Ok(new { message = "Password changed successfully." }),
             onFailure: error => BadRequest(new { error })
         );
     }

@@ -13,4 +13,8 @@ public interface IAuthentificationService
     Task<Result> ResetPassword(ResetPasswordDto dto);
     Task<Result<SimplyAuthResponse>> RefreshToken(RefreshTokenDto dto);
     Task<Result> Logout(string refreshToken);
+    Task<Result<List<SessionDto>>> GetActiveSessions(Guid userId, string currentRefreshToken);
+    Task<Result> RevokeSession(Guid userId, Guid sessionId);
+    Task<Result> RevokeAllOtherSessions(Guid userId, string currentRefreshToken);
+    Task<Result> ChangePassword(Guid userId, ChangePasswordDto dto, string currentRefreshToken);
 }

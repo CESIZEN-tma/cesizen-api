@@ -10,4 +10,7 @@ public interface IAdminSessionService
     Task<bool> RevokeAllAdminSessions(Guid adminId);
     Task<bool> RevokeSession(Guid sessionId);
     Task CleanupExpiredSessions();
+    Task<List<AdminSession>> GetActiveSessionsByAdminId(Guid adminId);
+    Task<bool> RevokeSessionForAdmin(Guid sessionId, Guid adminId);
+    Task<bool> RevokeAllSessionsExceptCurrent(Guid adminId, Guid currentSessionId);
 }

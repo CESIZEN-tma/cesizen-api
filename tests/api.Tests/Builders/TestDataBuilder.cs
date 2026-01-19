@@ -31,6 +31,7 @@ public static class TestDataBuilder
                 MemberSince = Faker.Date.Past(2),
                 ThumbnailUrl = Faker.Internet.Avatar(),
                 LockedUntil = null,
+                FailedLoginAttempts = 0,
                 AccountActivated = true,
                 Active = true,
                 CreationTime = DateTime.UtcNow,
@@ -60,7 +61,16 @@ public static class TestDataBuilder
 
         public static User BuildLocked(DateTime? until = null)
         {
-            return Build(u => u.LockedUntil = until ?? DateTime.UtcNow.AddHours(1));
+            return Build(u =>
+            {
+                u.LockedUntil = until ?? DateTime.UtcNow.AddHours(1);
+                u.FailedLoginAttempts = 5;
+            });
+        }
+
+        public static User BuildWithFailedAttempts(int attempts)
+        {
+            return Build(u => u.FailedLoginAttempts = attempts);
         }
 
         public static User BuildDeleted()
@@ -228,6 +238,7 @@ public static class TestDataBuilder
                 MemberSince = Faker.Date.Past(2),
                 ThumbnailUrl = Faker.Internet.Avatar(),
                 LockedUntil = null,
+                FailedLoginAttempts = 0,
                 AccountActivated = true,
                 CreationTime = DateTime.UtcNow,
                 UpdateTime = null,
@@ -251,7 +262,16 @@ public static class TestDataBuilder
 
         public static Administrator BuildLocked(DateTime? until = null)
         {
-            return Build(a => a.LockedUntil = until ?? DateTime.UtcNow.AddHours(1));
+            return Build(a =>
+            {
+                a.LockedUntil = until ?? DateTime.UtcNow.AddHours(1);
+                a.FailedLoginAttempts = 5;
+            });
+        }
+
+        public static Administrator BuildWithFailedAttempts(int attempts)
+        {
+            return Build(a => a.FailedLoginAttempts = attempts);
         }
 
         public static Administrator BuildDeleted()

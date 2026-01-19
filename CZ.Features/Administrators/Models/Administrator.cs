@@ -27,6 +27,8 @@ public partial class Administrator
 
     public DateTime? LockedUntil { get; set; }
 
+    public int FailedLoginAttempts { get; set; }
+
     public bool AccountActivated { get; set; }
 
     public DateTime CreationTime { get; set; }

@@ -10,4 +10,7 @@ public interface ISessionService
     Task<bool> RevokeAllUserSessions(Guid userId);
     Task<bool> RevokeSession(Guid sessionId);
     Task CleanupExpiredSessions();
+    Task<List<Session>> GetActiveSessionsByUserId(Guid userId);
+    Task<bool> RevokeSessionForUser(Guid sessionId, Guid userId);
+    Task<bool> RevokeAllSessionsExceptCurrent(Guid userId, Guid currentSessionId);
 }

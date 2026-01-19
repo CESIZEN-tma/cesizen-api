@@ -16,6 +16,9 @@ namespace api.CZ.Features.Authentifications.Services;
 
 public class AdminAuthentificationService : IAdminAuthentificationService
 {
+    private const int MaxFailedLoginAttempts = 5;
+    private const int LockoutDurationMinutes = 15;
+
     private readonly IAdministratorRepository _administratorRepository;
     private readonly ISimplyAuthService _simplyAuthService;
     private readonly IAdministratorFactory _administratorFactory;
@@ -95,6 +98,14 @@ public class AdminAuthentificationService : IAdminAuthentificationService
             return Result.Failure<SimplyAuthResponse>("Invalid credentials");
         }
 
+        // Check if account is locked
+        if (admin.LockedUntil.HasValue && admin.LockedUntil.Value > DateTime.UtcNow)
+        {
+            var remainingMinutes = (int)Math.Ceiling((admin.LockedUntil.Value - DateTime.UtcNow).TotalMinutes);
+            _logger.LogWarning("Admin login failed: account locked for {AdminId}, {Minutes} minutes remaining", admin.Id, remainingMinutes);
+            return Result.Failure<SimplyAuthResponse>($"Account is locked. Please try again in {remainingMinutes} minute(s).");
+        }
+
         if (!admin.AccountActivated)
         {
             _logger.LogWarning("Admin login failed: account not activated for {AdminId}", admin.Id);
@@ -105,8 +116,28 @@ public class AdminAuthentificationService : IAdminAuthentificationService
 
         if (result == SimplyVerificationResult.Failed)
         {
-            _logger.LogWarning("Admin login failed: invalid password for {AdminId}", admin.Id);
+            // Increment failed login attempts
+            admin.FailedLoginAttempts++;
+            admin.UpdateTime = DateTime.UtcNow;
+
+            if (admin.FailedLoginAttempts >= MaxFailedLoginAttempts)
+            {
+                admin.LockedUntil = DateTime.UtcNow.AddMinutes(LockoutDurationMinutes);
+                _logger.LogWarning("Admin account locked for {AdminId} after {Attempts} failed attempts", admin.Id, admin.FailedLoginAttempts);
+            }
+
+            await _administratorRepository.UpdateAsync(admin);
+            _logger.LogWarning("Admin login failed: invalid password for {AdminId}, attempt {Attempt}", admin.Id, admin.FailedLoginAttempts);
             return Result.Failure<SimplyAuthResponse>("Invalid credentials");
+        }
+
+        // Reset failed login attempts on successful login
+        if (admin.FailedLoginAttempts > 0 || admin.LockedUntil.HasValue)
+        {
+            admin.FailedLoginAttempts = 0;
+            admin.LockedUntil = null;
+            admin.UpdateTime = DateTime.UtcNow;
+            await _administratorRepository.UpdateAsync(admin);
         }
 
         if (result == SimplyVerificationResult.SuccessRehashNeeded)
@@ -356,6 +387,110 @@ public class AdminAuthentificationService : IAdminAuthentificationService
         }
 
         _logger.LogInformation("Administrator logged out successfully");
+
+        return Result.Success();
+    }
+
+    public async Task<Result<List<SessionDto>>> GetActiveSessions(Guid adminId, string currentRefreshToken)
+    {
+        _logger.LogInformation("Retrieving active sessions for admin {AdminId}", adminId);
+
+        var sessions = await _sessionService.GetActiveSessionsByAdminId(adminId);
+        var currentSession = await _sessionService.GetByRefreshToken(currentRefreshToken);
+
+        var sessionDtos = sessions.Select(s => new SessionDto
+        {
+            Id = s.Id,
+            CreatedAt = s.CreationTime,
+            ExpiresAt = s.ExpiresAt,
+            IsCurrentSession = currentSession != null && s.Id == currentSession.Id
+        }).ToList();
+
+        return Result.Success(sessionDtos);
+    }
+
+    public async Task<Result> RevokeSession(Guid adminId, Guid sessionId)
+    {
+        _logger.LogInformation("Revoking session {SessionId} for admin {AdminId}", sessionId, adminId);
+
+        var revoked = await _sessionService.RevokeSessionForAdmin(sessionId, adminId);
+
+        if (!revoked)
+        {
+            _logger.LogWarning("Session {SessionId} not found for admin {AdminId}", sessionId, adminId);
+            return Result.Failure("Session not found.");
+        }
+
+        return Result.Success();
+    }
+
+    public async Task<Result> RevokeAllOtherSessions(Guid adminId, string currentRefreshToken)
+    {
+        _logger.LogInformation("Revoking all other sessions for admin {AdminId}", adminId);
+
+        var currentSession = await _sessionService.GetByRefreshToken(currentRefreshToken);
+
+        if (currentSession == null)
+        {
+            _logger.LogWarning("Current session not found for admin {AdminId}", adminId);
+            return Result.Failure("Current session not found.");
+        }
+
+        await _sessionService.RevokeAllSessionsExceptCurrent(adminId, currentSession.Id);
+
+        return Result.Success();
+    }
+
+    public async Task<Result> ChangePassword(Guid adminId, ChangePasswordDto dto, string currentRefreshToken)
+    {
+        _logger.LogInformation("Password change attempt for admin {AdminId}", adminId);
+
+        if (dto.NewPassword != dto.ConfirmPassword)
+        {
+            _logger.LogWarning("Password change failed: passwords don't match for admin {AdminId}", adminId);
+            return Result.Failure("New passwords must match.");
+        }
+
+        var admin = await _administratorRepository.FindAsync(adminId);
+
+        if (admin == null)
+        {
+            _logger.LogError("Password change failed: admin {AdminId} not found", adminId);
+            return Result.Failure("Administrator not found.");
+        }
+
+        var verifyResult = _simplyAuthService.VerifyPassword(dto.CurrentPassword, admin.PasswordHash);
+
+        if (verifyResult == Simply.Auth.Core.Enums.SimplyVerificationResult.Failed)
+        {
+            _logger.LogWarning("Password change failed: current password incorrect for admin {AdminId}", adminId);
+            return Result.Failure("Current password is incorrect.");
+        }
+
+        // Hash the new password
+        var newHash = _simplyAuthService.HashPassword(dto.NewPassword);
+
+        admin.PasswordHash = newHash;
+        admin.UpdateTime = DateTime.UtcNow;
+
+        await _administratorRepository.UpdateAsync(admin);
+
+        // Revoke all other sessions for security
+        var currentSession = await _sessionService.GetByRefreshToken(currentRefreshToken);
+        if (currentSession != null)
+        {
+            await _sessionService.RevokeAllSessionsExceptCurrent(adminId, currentSession.Id);
+        }
+
+        // Send confirmation email
+        await _emailService.SendPasswordResetConfirmationEmail(
+            admin.FirstName,
+            admin.LastName,
+            admin.Email,
+            "Votre mot de passe administrateur a été modifié",
+            "Votre mot de passe administrateur a été modifié avec succès.");
+
+        _logger.LogInformation("Password changed successfully for admin {AdminId}", adminId);
 
         return Result.Success();
     }

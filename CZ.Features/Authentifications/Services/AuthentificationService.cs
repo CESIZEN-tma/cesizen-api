@@ -16,6 +16,9 @@ namespace api.CZ.Features.Authentifications.Services;
 
 public class AuthentificationService : IAuthentificationService
 {
+    private const int MaxFailedLoginAttempts = 5;
+    private const int LockoutDurationMinutes = 15;
+
     private readonly IUserRepository _userRepository;
     private readonly ISimplyAuthService _simplyAuthService;
     private readonly IUserFactory _userFactory;
@@ -87,13 +90,21 @@ public class AuthentificationService : IAuthentificationService
     public async Task<Result<SimplyAuthResponse>> Login(LoginDto dto)
     {
         _logger.LogInformation("Login attempt for email {Email}", dto.Email);
-        
+
         var user = await _userRepository.FirstOrDefaultAsync(u => u.Email == dto.Email);
-    
+
         if (user is null)
         {
             _logger.LogWarning("Login failed: user not found for {Email}", dto.Email);
             return Result.Failure<SimplyAuthResponse>("Invalid credentials");
+        }
+
+        // Check if account is locked
+        if (user.LockedUntil.HasValue && user.LockedUntil.Value > DateTime.UtcNow)
+        {
+            var remainingMinutes = (int)Math.Ceiling((user.LockedUntil.Value - DateTime.UtcNow).TotalMinutes);
+            _logger.LogWarning("Login failed: account locked for {UserId}, {Minutes} minutes remaining", user.Id, remainingMinutes);
+            return Result.Failure<SimplyAuthResponse>($"Account is locked. Please try again in {remainingMinutes} minute(s).");
         }
 
         if (!user.AccountActivated)
@@ -101,13 +112,33 @@ public class AuthentificationService : IAuthentificationService
             _logger.LogWarning("Login failed: account not activated for {UserId}", user.Id);
             return Result.Failure<SimplyAuthResponse>("Le compte doit être activé.");
         }
-        
+
         var result = _simplyAuthService.VerifyPassword(dto.Password, user.PasswordHash);
 
         if (result == SimplyVerificationResult.Failed)
         {
-            _logger.LogWarning("Login failed: invalid password for {UserId}", user.Id);
+            // Increment failed login attempts
+            user.FailedLoginAttempts++;
+            user.UpdateTime = DateTime.UtcNow;
+
+            if (user.FailedLoginAttempts >= MaxFailedLoginAttempts)
+            {
+                user.LockedUntil = DateTime.UtcNow.AddMinutes(LockoutDurationMinutes);
+                _logger.LogWarning("Account locked for {UserId} after {Attempts} failed attempts", user.Id, user.FailedLoginAttempts);
+            }
+
+            await _userRepository.UpdateAsync(user);
+            _logger.LogWarning("Login failed: invalid password for {UserId}, attempt {Attempt}", user.Id, user.FailedLoginAttempts);
             return Result.Failure<SimplyAuthResponse>("Invalid credentials");
+        }
+
+        // Reset failed login attempts on successful login
+        if (user.FailedLoginAttempts > 0 || user.LockedUntil.HasValue)
+        {
+            user.FailedLoginAttempts = 0;
+            user.LockedUntil = null;
+            user.UpdateTime = DateTime.UtcNow;
+            await _userRepository.UpdateAsync(user);
         }
 
         if (result == SimplyVerificationResult.SuccessRehashNeeded)
@@ -365,6 +396,110 @@ public class AuthentificationService : IAuthentificationService
         }
 
         _logger.LogInformation("User logged out successfully");
+
+        return Result.Success();
+    }
+
+    public async Task<Result<List<SessionDto>>> GetActiveSessions(Guid userId, string currentRefreshToken)
+    {
+        _logger.LogInformation("Retrieving active sessions for user {UserId}", userId);
+
+        var sessions = await _sessionService.GetActiveSessionsByUserId(userId);
+        var currentSession = await _sessionService.GetByRefreshToken(currentRefreshToken);
+
+        var sessionDtos = sessions.Select(s => new SessionDto
+        {
+            Id = s.Id,
+            CreatedAt = s.CreationTime,
+            ExpiresAt = s.ExpiresAt,
+            IsCurrentSession = currentSession != null && s.Id == currentSession.Id
+        }).ToList();
+
+        return Result.Success(sessionDtos);
+    }
+
+    public async Task<Result> RevokeSession(Guid userId, Guid sessionId)
+    {
+        _logger.LogInformation("Revoking session {SessionId} for user {UserId}", sessionId, userId);
+
+        var revoked = await _sessionService.RevokeSessionForUser(sessionId, userId);
+
+        if (!revoked)
+        {
+            _logger.LogWarning("Session {SessionId} not found for user {UserId}", sessionId, userId);
+            return Result.Failure("Session not found.");
+        }
+
+        return Result.Success();
+    }
+
+    public async Task<Result> RevokeAllOtherSessions(Guid userId, string currentRefreshToken)
+    {
+        _logger.LogInformation("Revoking all other sessions for user {UserId}", userId);
+
+        var currentSession = await _sessionService.GetByRefreshToken(currentRefreshToken);
+
+        if (currentSession == null)
+        {
+            _logger.LogWarning("Current session not found for user {UserId}", userId);
+            return Result.Failure("Current session not found.");
+        }
+
+        await _sessionService.RevokeAllSessionsExceptCurrent(userId, currentSession.Id);
+
+        return Result.Success();
+    }
+
+    public async Task<Result> ChangePassword(Guid userId, ChangePasswordDto dto, string currentRefreshToken)
+    {
+        _logger.LogInformation("Password change attempt for user {UserId}", userId);
+
+        if (dto.NewPassword != dto.ConfirmPassword)
+        {
+            _logger.LogWarning("Password change failed: passwords don't match for user {UserId}", userId);
+            return Result.Failure("New passwords must match.");
+        }
+
+        var user = await _userRepository.FindAsync(userId);
+
+        if (user == null)
+        {
+            _logger.LogError("Password change failed: user {UserId} not found", userId);
+            return Result.Failure("User not found.");
+        }
+
+        var verifyResult = _simplyAuthService.VerifyPassword(dto.CurrentPassword, user.PasswordHash);
+
+        if (verifyResult == Simply.Auth.Core.Enums.SimplyVerificationResult.Failed)
+        {
+            _logger.LogWarning("Password change failed: current password incorrect for user {UserId}", userId);
+            return Result.Failure("Current password is incorrect.");
+        }
+
+        // Hash the new password
+        var newHash = _simplyAuthService.HashPassword(dto.NewPassword);
+
+        user.PasswordHash = newHash;
+        user.UpdateTime = DateTime.UtcNow;
+
+        await _userRepository.UpdateAsync(user);
+
+        // Revoke all other sessions for security
+        var currentSession = await _sessionService.GetByRefreshToken(currentRefreshToken);
+        if (currentSession != null)
+        {
+            await _sessionService.RevokeAllSessionsExceptCurrent(userId, currentSession.Id);
+        }
+
+        // Send confirmation email
+        await _emailService.SendPasswordResetConfirmationEmail(
+            user.FirstName,
+            user.LastName,
+            user.Email,
+            "Votre mot de passe a été modifié",
+            "Votre mot de passe a été modifié avec succès.");
+
+        _logger.LogInformation("Password changed successfully for user {UserId}", userId);
 
         return Result.Success();
     }

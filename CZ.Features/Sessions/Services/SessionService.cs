@@ -146,4 +146,71 @@ public class SessionService : ISessionService
 
         _logger.LogInformation("Cleaned up {Count} expired sessions", expiredSessions.Count());
     }
+
+    public async Task<List<Session>> GetActiveSessionsByUserId(Guid userId)
+    {
+        var sessions = await _repository.ListAsync(s =>
+            s.IdUsers == userId &&
+            !s.Consumed &&
+            s.ExpiresAt > DateTime.UtcNow);
+
+        _logger.LogInformation("Retrieved {Count} active sessions for user {UserId}", sessions.Count(), userId);
+
+        return sessions.ToList();
+    }
+
+    public async Task<bool> RevokeSessionForUser(Guid sessionId, Guid userId)
+    {
+        var session = await _repository.FirstOrDefaultAsync(s =>
+            s.Id == sessionId &&
+            s.IdUsers == userId);
+
+        if (session == null)
+        {
+            _logger.LogWarning("Attempted to revoke non-existent session {SessionId} for user {UserId}", sessionId, userId);
+            return false;
+        }
+
+        if (session.Consumed)
+        {
+            _logger.LogInformation("Session {SessionId} already consumed", sessionId);
+            return true;
+        }
+
+        session.Consumed = true;
+        session.UpdateTime = DateTime.UtcNow;
+
+        await _repository.UpdateAsync(session);
+
+        _logger.LogInformation("Session {SessionId} revoked for user {UserId}", sessionId, userId);
+
+        return true;
+    }
+
+    public async Task<bool> RevokeAllSessionsExceptCurrent(Guid userId, Guid currentSessionId)
+    {
+        var sessions = await _repository.ListAsync(s =>
+            s.IdUsers == userId &&
+            s.Id != currentSessionId &&
+            !s.Consumed &&
+            s.ExpiresAt > DateTime.UtcNow);
+
+        if (!sessions.Any())
+        {
+            _logger.LogInformation("No other active sessions found for user {UserId}", userId);
+            return true;
+        }
+
+        foreach (var session in sessions)
+        {
+            session.Consumed = true;
+            session.UpdateTime = DateTime.UtcNow;
+            await _repository.UpdateAsync(session);
+        }
+
+        _logger.LogInformation("Revoked {Count} sessions (excluding current) for user {UserId}",
+            sessions.Count(), userId);
+
+        return true;
+    }
 }

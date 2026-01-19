@@ -13,4 +13,8 @@ public interface IAdminAuthentificationService
     Task<Result> ResetPassword(ResetPasswordDto dto);
     Task<Result<SimplyAuthResponse>> RefreshToken(RefreshTokenDto dto);
     Task<Result> Logout(string refreshToken);
+    Task<Result<List<SessionDto>>> GetActiveSessions(Guid adminId, string currentRefreshToken);
+    Task<Result> RevokeSession(Guid adminId, Guid sessionId);
+    Task<Result> RevokeAllOtherSessions(Guid adminId, string currentRefreshToken);
+    Task<Result> ChangePassword(Guid adminId, ChangePasswordDto dto, string currentRefreshToken);
 }

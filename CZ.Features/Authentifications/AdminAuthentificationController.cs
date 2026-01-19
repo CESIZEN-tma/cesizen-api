@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using api.CZ.Features.Authentifications.Services;
 using api.CZ.Features.Authentifications.DTOs;
@@ -15,6 +17,12 @@ public class AdminAuthentificationController : ControllerBase
     {
         _service = service;
         _logger = logger;
+    }
+
+    private Guid GetAdminId()
+    {
+        var adminIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return Guid.Parse(adminIdClaim!);
     }
 
     [HttpPost("register")]
@@ -90,6 +98,60 @@ public class AdminAuthentificationController : ControllerBase
 
         return result.Match<IActionResult>(
             onSuccess: () => Ok(new { message = "Logged out successfully." }),
+            onFailure: error => BadRequest(new { error })
+        );
+    }
+
+    [Authorize(Roles = "Administrator")]
+    [HttpGet("sessions")]
+    public async Task<IActionResult> GetActiveSessions([FromHeader(Name = "X-Refresh-Token")] string refreshToken)
+    {
+        var adminId = GetAdminId();
+        var result = await _service.GetActiveSessions(adminId, refreshToken);
+
+        return result.Match<IActionResult>(
+            onSuccess: sessions => Ok(sessions),
+            onFailure: error => BadRequest(new { error })
+        );
+    }
+
+    [Authorize(Roles = "Administrator")]
+    [HttpDelete("sessions/{sessionId:guid}")]
+    public async Task<IActionResult> RevokeSession(Guid sessionId)
+    {
+        var adminId = GetAdminId();
+        var result = await _service.RevokeSession(adminId, sessionId);
+
+        return result.Match<IActionResult>(
+            onSuccess: () => Ok(new { message = "Session revoked successfully." }),
+            onFailure: error => NotFound(new { error })
+        );
+    }
+
+    [Authorize(Roles = "Administrator")]
+    [HttpDelete("sessions")]
+    public async Task<IActionResult> RevokeAllOtherSessions([FromHeader(Name = "X-Refresh-Token")] string refreshToken)
+    {
+        var adminId = GetAdminId();
+        var result = await _service.RevokeAllOtherSessions(adminId, refreshToken);
+
+        return result.Match<IActionResult>(
+            onSuccess: () => Ok(new { message = "All other sessions revoked successfully." }),
+            onFailure: error => BadRequest(new { error })
+        );
+    }
+
+    [Authorize(Roles = "Administrator")]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword(
+        [FromBody] ChangePasswordDto dto,
+        [FromHeader(Name = "X-Refresh-Token")] string refreshToken)
+    {
+        var adminId = GetAdminId();
+        var result = await _service.ChangePassword(adminId, dto, refreshToken);
+
+        return result.Match<IActionResult>(
+            onSuccess: () => Ok(new { message = "Password changed successfully." }),
             onFailure: error => BadRequest(new { error })
         );
     }

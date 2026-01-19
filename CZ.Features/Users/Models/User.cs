@@ -25,6 +25,8 @@ public partial class User
 
     public DateTime? LockedUntil { get; set; }
 
+    public int FailedLoginAttempts { get; set; }
+
     public bool AccountActivated { get; set; }
 
     public bool Active { get; set; }
