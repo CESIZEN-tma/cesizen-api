@@ -1,4 +1,4 @@
-# Refresh Token Feature Documentation
+ Refresh Token Feature Documentation
 
 **Created:** 2026-01-11
 **Status:** ✅ Fully Implemented
