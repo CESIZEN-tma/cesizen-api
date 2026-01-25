@@ -8,7 +8,14 @@
       "Bash(dotnet ef migrations add:*)",
       "Bash(dotnet ef database update:*)",
       "Bash(dotnet ef migrations:*)",
-      "Bash(dotnet run:*)"
+      "Bash(dotnet run:*)",
+      "Bash(if [ -d \"DOCUMENTATION\" ])",
+      "Bash(then find DOCUMENTATION -type f -name \"*.md\")",
+      "Bash(else echo \"DOCUMENTATION folder not found\")",
+      "Bash(fi)",
+      "Bash(if [ -f \"nul\" ])",
+      "Bash(then rm nul)",
+      "Bash(else echo \"nul file not found\")"
     ]
   }
 }

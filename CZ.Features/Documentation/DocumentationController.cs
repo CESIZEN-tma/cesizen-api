@@ -1,65 +1,34 @@
-using System.Text.RegularExpressions;
-using Markdig;
-using Microsoft.AspNetCore.Authorization;
+using api.CZ.Features.Documentation.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace api.CZ.Features.Documentation;
 
 [ApiController]
-[Route("api/public/docs/integration/authentification")]
+[Route("api/public/docs")]
 public class DocumentationController : ControllerBase
 {
-    private readonly IWebHostEnvironment _env;
-    private readonly MarkdownPipeline _pipeline;
+    private readonly IDocumentationService _documentationService;
 
-    public DocumentationController(IWebHostEnvironment env)
+    public DocumentationController(IDocumentationService documentationService)
     {
-        _env = env;
-
-        _pipeline = new MarkdownPipelineBuilder()
-            .UseAdvancedExtensions()
-            .Build();
+        _documentationService = documentationService;
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetReadme()
+    [HttpGet("{*path}")]
+    public async Task<IActionResult> GetDocumentation(string? path = null)
     {
-        var filePath = Path.Combine(
-            _env.ContentRootPath,
-            "DOCUMENTATION",
-            "INTEGRATION",
-            "AUTHENTIFICATION",
-            "README.md"
-        );
+        // Default to integration/authentification if no path provided
+        var pathSegments = string.IsNullOrEmpty(path)
+            ? new[] { "INTEGRATION", "AUTHENTIFICATION" }
+            : path.Split('/', StringSplitOptions.RemoveEmptyEntries)
+                  .Select(p => p.ToUpperInvariant())
+                  .ToArray();
 
-        if (!System.IO.File.Exists(filePath))
+        var html = await _documentationService.GetDocumentationAsHtmlAsync(pathSegments);
+
+        if (html == null)
             return NotFound();
 
-        var markdown = await System.IO.File.ReadAllTextAsync(filePath);
-
-        var html = Markdown.ToHtml(markdown, _pipeline);
-
-        // Rewrite markdown backlinks (*.md) to API routes
-        html = RewriteLinks(html);
-
         return Content(html, "text/html");
-    }
-
-    private static string RewriteLinks(string html)
-    {
-        // README.md, guide.md, faq.md → /api/public/docs/integration/authentification/{name}
-        return Regex.Replace(
-            html,
-            "href=\"([^\"]+)\\.md\"",
-            match =>
-            {
-                var docName = match.Groups[1].Value
-                    .Split('/')
-                    .Last();
-
-                return $"href=\"/api/public/docs/integration/authentification/{docName}\"";
-            },
-            RegexOptions.IgnoreCase
-        );
     }
 }

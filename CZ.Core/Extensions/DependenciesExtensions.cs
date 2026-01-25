@@ -14,6 +14,7 @@ using api.CZ.Features.AdminSessions.Services;
 using api.CZ.Features.Administrators.Factories;
 using api.CZ.Features.Administrators.Repositories;
 using api.CZ.Features.Authentifications.Services;
+using api.CZ.Features.Documentation.Services;
 using api.CZ.Features.EmailConfirmationTokens.Factories;
 using api.CZ.Features.EmailConfirmationTokens.Repositories;
 using api.CZ.Features.EmailConfirmationTokens.Services;
@@ -75,6 +76,7 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<IEmailSender, EmailSender>();
+        builder.Services.AddScoped<IDocumentationService, DocumentationService>();
 
         // User services
         builder.Services.AddScoped<IAuthentificationService, AuthentificationService>();
