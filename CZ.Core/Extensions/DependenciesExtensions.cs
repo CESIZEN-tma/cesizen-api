@@ -1,10 +1,43 @@
 using System.Text;
+using api.CZ.Core.Services;
+using api.CZ.Core.Utils;
 using api.CZ.Data.EFCore;
+using api.CZ.Features.AdminEmailConfirmationTokens.Factories;
+using api.CZ.Features.AdminEmailConfirmationTokens.Repositories;
+using api.CZ.Features.AdminEmailConfirmationTokens.Services;
+using api.CZ.Features.AdminPasswordResetTokens.Factories;
+using api.CZ.Features.AdminPasswordResetTokens.Repositories;
+using api.CZ.Features.AdminPasswordResetTokens.Services;
+using api.CZ.Features.AdminSessions.Factories;
+using api.CZ.Features.AdminSessions.Repositories;
+using api.CZ.Features.AdminSessions.Services;
+using api.CZ.Features.Administrators.Factories;
+using api.CZ.Features.Administrators.Repositories;
+using api.CZ.Features.Authentifications.Services;
+using api.CZ.Features.Documentation.Services;
+using api.CZ.Features.EmailConfirmationTokens.Factories;
+using api.CZ.Features.EmailConfirmationTokens.Repositories;
+using api.CZ.Features.EmailConfirmationTokens.Services;
 using api.CZ.Features.HealthChecks.Services;
+using api.CZ.Features.PasswordResetTokens.Factories;
+using api.CZ.Features.PasswordResetTokens.Repositories;
+using api.CZ.Features.PasswordResetTokens.Services;
+using api.CZ.Features.Sessions.Factories;
+using api.CZ.Features.Sessions.Repositories;
+using api.CZ.Features.Sessions.Services;
+using api.CZ.Features.Users.Factories;
+using api.CZ.Features.Users.Repositories;
+using api.CZ.Features.Users.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Simply.Auth.Argon2.Configuration;
+using Simply.Auth.Argon2.Services;
+using Simply.Auth.AspNetCore.Extensions;
+using Simply.Auth.Core.Abstractions;
 
 namespace api.CZ.Core.Extensions;
 
@@ -14,21 +47,98 @@ public static class DependenciesExtensions
     {
         builder.Services.AddControllers();
         builder.Services.AddHttpContextAccessor();
+        builder.AddSimply(65536,3,4,"CesiZen-api","CesiZen-front");
         builder.AddRepositories();
         builder.AddServices();
-        builder.AddJwt();
+        builder.AddFactories();
         builder.AddSwagger();
         builder.AddEfCoreConfiguration();
     }
 
+    private static void AddFactories(this WebApplicationBuilder builder)
+    {
+        // User factories
+        builder.Services.AddScoped<IUserFactory, UserFactory>();
+        builder.Services.AddScoped<IEmailConfirmationTokenFactory, EmailConfirmationTokenFactory>();
+        builder.Services.AddScoped<IPasswordResetTokenFactory, PasswordResetTokenFactory>();
+        builder.Services.AddScoped<ISessionFactory, SessionFactory>();
+
+        // Admin factories
+        builder.Services.AddScoped<IAdministratorFactory, AdministratorFactory>();
+        builder.Services.AddScoped<IAdminEmailConfirmationTokenFactory, AdminEmailConfirmationTokenFactory>();
+        builder.Services.AddScoped<IAdminPasswordResetTokenFactory, AdminPasswordResetTokenFactory>();
+        builder.Services.AddScoped<IAdminSessionFactory, AdminSessionFactory>();
+    }
+
     private static void AddServices(this WebApplicationBuilder builder)
     {
+        // Common services
         builder.Services.AddScoped<IHealthCheckService, HealthCheckService>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<IEmailSender, EmailSender>();
+        builder.Services.AddScoped<IDocumentationService, DocumentationService>();
+
+        // User services
+        builder.Services.AddScoped<IAuthentificationService, AuthentificationService>();
+        builder.Services.AddScoped<IUserService, UserService>();
+        builder.Services.AddScoped<IEmailConfirmationTokenService, EmailConfirmationTokenService>();
+        builder.Services.AddScoped<IPasswordResetTokenService, PasswordResetTokenService>();
+        builder.Services.AddScoped<ISessionService, SessionService>();
+
+        // Admin services
+        builder.Services.AddScoped<IAdminAuthentificationService, AdminAuthentificationService>();
+        builder.Services.AddScoped<IAdminEmailConfirmationTokenService, AdminEmailConfirmationTokenService>();
+        builder.Services.AddScoped<IAdminPasswordResetTokenService, AdminPasswordResetTokenService>();
+        builder.Services.AddScoped<IAdminSessionService, AdminSessionService>();
     }
 
     private static void AddRepositories(this WebApplicationBuilder builder)
     {
-        return;
+        // User repositories
+        builder.Services.AddScoped<IUserRepository, UserRepository>();
+        builder.Services.AddScoped<IEmailConfirmationTokenRepository, EmailConfirmationTokenRepository>();
+        builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
+        builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+
+        // Admin repositories
+        builder.Services.AddScoped<IAdministratorRepository, AdministratorRepository>();
+        builder.Services.AddScoped<IAdminEmailConfirmationTokenRepository, AdminEmailConfirmationTokenRepository>();
+        builder.Services.AddScoped<IAdminPasswordResetTokenRepository, AdminPasswordResetTokenRepository>();
+        builder.Services.AddScoped<IAdminSessionRepository, AdminSessionRepository>();
+    }
+    
+    private static void AddSimply(this WebApplicationBuilder builder, int memorySize, int iterations,
+        int parallelismDegree, string issuer, string audience)
+    {
+        string jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") 
+                           ?? throw new Exception("JWT_SECRET not found");
+
+        
+        builder.Services.AddSimplyAuth(
+            argon2 =>
+            {
+                argon2.MemorySize = memorySize;
+                argon2.Iterations = iterations;
+                argon2.DegreeOfParallelism = parallelismDegree;
+            },
+            jwt =>
+            {
+                jwt.SecretKey = jwtSecret;
+                jwt.Issuer = issuer;
+                jwt.Audience = audience;
+            });
+        
+        var descriptor = builder.Services.FirstOrDefault(d => 
+            d.ServiceType == typeof(ISimplyPasswordHasher));
+    
+        if (descriptor != null)
+            builder.Services.Remove(descriptor);
+        
+        builder.Services.AddSingleton<ISimplyPasswordHasher>(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<SimplyArgon2Options>>();
+            return new SimplyArgon2Hasher(options);
+        });
     }
 
     private static void AddJwt(this WebApplicationBuilder builder)

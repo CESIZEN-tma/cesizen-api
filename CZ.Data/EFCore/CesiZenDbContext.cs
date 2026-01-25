@@ -1,16 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using api.CZ.Features.Administrators.Models;
+using api.CZ.Features.AdminEmailConfirmationTokens.Models;
+using api.CZ.Features.AdminPasswordResetTokens.Models;
+using api.CZ.Features.AdminSessions.Models;
+using api.CZ.Features.EmailConfirmationTokens.Models;
+using api.CZ.Features.PasswordResetTokens.Models;
+using api.CZ.Features.Users.Models;
 using Microsoft.EntityFrameworkCore;
-using api.scaffold;
+using Session = api.CZ.Features.Sessions.Models.Session;
+
+using api.scaffoldBis;
+
 namespace api.CZ.Data.EFCore;
 
 public partial class CesiZenDbContext : DbContext
 {
-    public CesiZenDbContext()
-    {
-    }
-
     public CesiZenDbContext(DbContextOptions<CesiZenDbContext> options)
         : base(options)
     {
@@ -19,6 +24,12 @@ public partial class CesiZenDbContext : DbContext
     public virtual DbSet<AdminLog> AdminLogs { get; set; }
 
     public virtual DbSet<Administrator> Administrators { get; set; }
+
+    public virtual DbSet<AdminEmailConfirmationToken> AdminEmailConfirmationTokens { get; set; }
+
+    public virtual DbSet<AdminPasswordResetToken> AdminPasswordResetTokens { get; set; }
+
+    public virtual DbSet<AdminSession> AdminSessions { get; set; }
 
     public virtual DbSet<Bookmark> Bookmarks { get; set; }
 
@@ -49,14 +60,7 @@ public partial class CesiZenDbContext : DbContext
     public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<UserSavedConfiguration> UserSavedConfigurations { get; set; }
-    
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        var connectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING")
-                                  ?? throw new InvalidOperationException(
-                                      "Connection string 'DATABASE_CONNECTION_STRING' not found.");
-        optionsBuilder.UseNpgsql(connectionString);
-    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<AdminLog>(entity =>
@@ -69,20 +73,20 @@ public partial class CesiZenDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.ActionCode).HasColumnName("action_code");
-            entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("creation_time");
-            entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deletion_time");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.EntityType)
                 .HasMaxLength(255)
                 .HasColumnName("entity_type");
+            entity.Property(e => e.IdAdministrator).HasColumnName("id_administrator");
             entity.Property(e => e.TargetedEntityId).HasColumnName("targeted_entity_id");
-            entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("update_time");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
+
+            entity.HasOne(d => d.IdAdministratorNavigation).WithMany(p => p.AdminLogs)
+                .HasForeignKey(d => d.IdAdministrator)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("admin_logs_id_administrator_fk");
         });
 
         modelBuilder.Entity<Administrator>(entity =>
@@ -99,43 +103,27 @@ public partial class CesiZenDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.AccountActivated).HasColumnName("account_activated");
-            entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("creation_time");
-            entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deletion_time");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
             entity.Property(e => e.Email)
                 .HasMaxLength(255)
                 .HasColumnName("email");
             entity.Property(e => e.FirstName)
                 .HasMaxLength(255)
                 .HasColumnName("first_name");
-            entity.Property(e => e.IdAdminLogs).HasColumnName("id_admin_logs");
             entity.Property(e => e.IdNavigationMenu).HasColumnName("id_navigation_menu");
             entity.Property(e => e.LastName)
                 .HasMaxLength(255)
                 .HasColumnName("last_name");
-            entity.Property(e => e.LockedUntil)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("locked_until");
-            entity.Property(e => e.MemberSince)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("member_since");
+            entity.Property(e => e.LockedUntil).HasColumnName("locked_until");
+            entity.Property(e => e.MemberSince).HasColumnName("member_since");
             entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
             entity.Property(e => e.ThumbnailUrl).HasColumnName("thumbnail_url");
-            entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("update_time");
-
-            entity.HasOne(d => d.IdAdminLogsNavigation).WithMany(p => p.Administrators)
-                .HasForeignKey(d => d.IdAdminLogs)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("administrators_id_admin_logs_fk");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
 
             entity.HasOne(d => d.IdNavigationMenuNavigation).WithMany(p => p.Administrators)
                 .HasForeignKey(d => d.IdNavigationMenu)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("administrators_id_navigation_menu_fk");
 
             entity.HasMany(d => d.IdSessions).WithMany(p => p.Ids)
@@ -158,6 +146,79 @@ public partial class CesiZenDbContext : DbContext
                     });
         });
 
+        modelBuilder.Entity<AdminEmailConfirmationToken>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("admin_email_confirmation_tokens_pk");
+
+            entity.ToTable("admin_email_confirmation_tokens");
+
+            entity.Property(e => e.Id)
+                .ValueGeneratedNever()
+                .HasColumnName("id");
+            entity.Property(e => e.Consumed).HasColumnName("consumed");
+            entity.Property(e => e.ConsumedAt).HasColumnName("consumed_at");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+            entity.Property(e => e.IdAdministrators).HasColumnName("id_administrators");
+            entity.Property(e => e.Token).HasColumnName("token");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
+
+            entity.HasOne(d => d.IdAdministratorsNavigation).WithMany(p => p.AdminEmailConfirmationTokens)
+                .HasForeignKey(d => d.IdAdministrators)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("admin_email_confirmation_tokens_id_administrators_fk");
+        });
+
+        modelBuilder.Entity<AdminPasswordResetToken>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("admin_password_reset_tokens_pk");
+
+            entity.ToTable("admin_password_reset_tokens");
+
+            entity.HasIndex(e => e.Token, "admin_token_idx");
+
+            entity.Property(e => e.Id)
+                .ValueGeneratedNever()
+                .HasColumnName("id");
+            entity.Property(e => e.Consumed).HasColumnName("consumed");
+            entity.Property(e => e.ConsumedAt).HasColumnName("consumed_at");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+            entity.Property(e => e.IdAdministrators).HasColumnName("id_administrators");
+            entity.Property(e => e.Token).HasColumnName("token");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
+
+            entity.HasOne(d => d.IdAdministratorsNavigation).WithMany(p => p.AdminPasswordResetTokens)
+                .HasForeignKey(d => d.IdAdministrators)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("admin_password_reset_tokens_id_administrators_fk");
+        });
+
+        modelBuilder.Entity<AdminSession>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("admin_session_pk");
+
+            entity.ToTable("admin_session");
+
+            entity.Property(e => e.Id)
+                .ValueGeneratedNever()
+                .HasColumnName("id");
+            entity.Property(e => e.Consumed).HasColumnName("consumed");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+            entity.Property(e => e.IdAdministrators).HasColumnName("id_administrators");
+            entity.Property(e => e.Token).HasColumnName("token");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
+
+            entity.HasOne(d => d.IdAdministratorsNavigation).WithMany(p => p.AdminSessions)
+                .HasForeignKey(d => d.IdAdministrators)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("admin_session_id_administrators_fk");
+        });
+
         modelBuilder.Entity<Bookmark>(entity =>
         {
             entity.HasKey(e => new { e.Id, e.IdConfigurations }).HasName("bookmark_pk");
@@ -166,15 +227,9 @@ public partial class CesiZenDbContext : DbContext
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.IdConfigurations).HasColumnName("id_configurations");
-            entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("creation_time");
-            entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deletion_time");
-            entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("update_time");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
 
             entity.HasOne(d => d.IdNavigation).WithMany(p => p.Bookmarks)
                 .HasForeignKey(d => d.Id)
@@ -196,12 +251,8 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.Id)
                 .ValueGeneratedNever()
                 .HasColumnName("id");
-            entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("creation_time");
-            entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deletion_time");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
             entity.Property(e => e.Difficulty).HasColumnName("difficulty");
             entity.Property(e => e.DurationMinutes).HasColumnName("duration_minutes");
             entity.Property(e => e.Exhalation).HasColumnName("exhalation");
@@ -218,9 +269,7 @@ public partial class CesiZenDbContext : DbContext
                 .HasColumnName("objective");
             entity.Property(e => e.Retention1).HasColumnName("retention1");
             entity.Property(e => e.Retention2).HasColumnName("retention2");
-            entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("update_time");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
 
             entity.HasOne(d => d.IdAdministratorsNavigation).WithMany(p => p.Configurations)
                 .HasForeignKey(d => d.IdAdministrators)
@@ -239,20 +288,12 @@ public partial class CesiZenDbContext : DbContext
                 .HasColumnName("id");
             entity.Property(e => e.Consumed).HasColumnName("consumed");
             entity.Property(e => e.ConsumedAt).HasColumnName("consumed_at");
-            entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("creation_time");
-            entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deletion_time");
-            entity.Property(e => e.ExpiresAt)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("expires_at");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
             entity.Property(e => e.IdUsers).HasColumnName("id_users");
             entity.Property(e => e.Token).HasColumnName("token");
-            entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("update_time");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
 
             entity.HasOne(d => d.IdUsersNavigation).WithMany(p => p.EmailConfirmationTokens)
                 .HasForeignKey(d => d.IdUsers)
@@ -274,13 +315,9 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.ContentType)
                 .HasMaxLength(255)
                 .HasColumnName("content_type");
-            entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("creation_time");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
             entity.Property(e => e.CurrentlyEditing).HasColumnName("currently_editing");
-            entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deletion_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.IdAdministrators).HasColumnName("id_administrators");
             entity.Property(e => e.Status)
@@ -289,9 +326,7 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.Title)
                 .HasMaxLength(100)
                 .HasColumnName("title");
-            entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("update_time");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
 
             entity.HasOne(d => d.IdAdministratorsNavigation).WithMany(p => p.InformationPages)
                 .HasForeignKey(d => d.IdAdministrators)
@@ -327,18 +362,12 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.Id)
                 .ValueGeneratedNever()
                 .HasColumnName("id");
-            entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("creation_time");
-            entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deletion_time");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
             entity.Property(e => e.Label)
                 .HasMaxLength(255)
                 .HasColumnName("label");
-            entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("update_time");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
         });
 
         modelBuilder.Entity<NavigationMenu>(entity =>
@@ -350,20 +379,14 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.Id)
                 .ValueGeneratedNever()
                 .HasColumnName("id");
-            entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("creation_time");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
             entity.Property(e => e.CurrentlyEditing).HasColumnName("currently_editing");
-            entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deletion_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
             entity.Property(e => e.Label)
                 .HasMaxLength(100)
                 .HasColumnName("label");
             entity.Property(e => e.Position).HasColumnName("position");
-            entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("update_time");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
             entity.Property(e => e.Url).HasColumnName("url");
         });
 
@@ -376,20 +399,12 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.Id)
                 .ValueGeneratedNever()
                 .HasColumnName("id");
-            entity.Property(e => e.ChangedAt)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("changed_at");
-            entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("creation_time");
-            entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deletion_time");
+            entity.Property(e => e.ChangedAt).HasColumnName("changed_at");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
             entity.Property(e => e.IdPasswordsInfos).HasColumnName("id_passwords_infos");
             entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
-            entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("update_time");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
 
             entity.HasOne(d => d.IdPasswordsInfosNavigation).WithMany(p => p.PasswordHistories)
                 .HasForeignKey(d => d.IdPasswordsInfos)
@@ -410,25 +425,17 @@ public partial class CesiZenDbContext : DbContext
                 .HasColumnName("id");
             entity.Property(e => e.Consumed).HasColumnName("consumed");
             entity.Property(e => e.ConsumedAt).HasColumnName("consumed_at");
-            entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("creation_time");
-            entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deletion_time");
-            entity.Property(e => e.ExpiresAt)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("expires_at");
-            entity.Property(e => e.IdPasswordsInfos).HasColumnName("id_passwords_infos");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+            entity.Property(e => e.IdUsers).HasColumnName("id_users");
             entity.Property(e => e.Token).HasColumnName("token");
-            entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("update_time");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
 
-            entity.HasOne(d => d.IdPasswordsInfosNavigation).WithMany(p => p.PasswordResetTokens)
-                .HasForeignKey(d => d.IdPasswordsInfos)
+            entity.HasOne(d => d.IdUsersNavigation).WithMany(p => p.PasswordResetTokens)
+                .HasForeignKey(d => d.IdUsers)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("password_reset_tokens_id_passwords_infos_fk");
+                .HasConstraintName("password_reset_tokens_id_users_fk");
         });
 
         modelBuilder.Entity<PasswordsInfo>(entity =>
@@ -441,21 +448,11 @@ public partial class CesiZenDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.AttemptCount).HasColumnName("attempt_count");
-            entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("creation_time");
-            entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deletion_time");
-            entity.Property(e => e.LastLogin)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("last_login");
-            entity.Property(e => e.LastReset)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("last_reset");
-            entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("update_time");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
+            entity.Property(e => e.LastLogin).HasColumnName("last_login");
+            entity.Property(e => e.LastReset).HasColumnName("last_reset");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
         });
 
         modelBuilder.Entity<Question>(entity =>
@@ -467,18 +464,12 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.Id)
                 .ValueGeneratedNever()
                 .HasColumnName("id");
-            entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("creation_time");
-            entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deletion_time");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
             entity.Property(e => e.IdQuizz).HasColumnName("id_quizz");
             entity.Property(e => e.Position).HasColumnName("position");
             entity.Property(e => e.Text).HasColumnName("text");
-            entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("update_time");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
 
             entity.HasOne(d => d.IdQuizzNavigation).WithMany(p => p.Questions)
                 .HasForeignKey(d => d.IdQuizz)
@@ -496,18 +487,12 @@ public partial class CesiZenDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.Active).HasColumnName("active");
-            entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("creation_time");
-            entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deletion_time");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
             entity.Property(e => e.Nom)
                 .HasMaxLength(255)
                 .HasColumnName("nom");
-            entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("update_time");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
         });
 
         modelBuilder.Entity<ResponsesOption>(entity =>
@@ -519,12 +504,8 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.Id)
                 .ValueGeneratedNever()
                 .HasColumnName("id");
-            entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("creation_time");
-            entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deletion_time");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
             entity.Property(e => e.IdQuestions).HasColumnName("id_questions");
             entity.Property(e => e.Label)
                 .HasMaxLength(255)
@@ -536,9 +517,7 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.TargetedField)
                 .HasMaxLength(255)
                 .HasColumnName("targeted_field");
-            entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("update_time");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
             entity.Property(e => e.Value)
                 .HasMaxLength(255)
                 .HasColumnName("value");
@@ -559,20 +538,12 @@ public partial class CesiZenDbContext : DbContext
                 .ValueGeneratedNever()
                 .HasColumnName("id");
             entity.Property(e => e.Consumed).HasColumnName("consumed");
-            entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("creation_time");
-            entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deletion_time");
-            entity.Property(e => e.ExpiresAt)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("expires_at");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
             entity.Property(e => e.IdUsers).HasColumnName("id_users");
             entity.Property(e => e.Token).HasColumnName("token");
-            entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("update_time");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
 
             entity.HasOne(d => d.IdUsersNavigation).WithMany(p => p.Sessions)
                 .HasForeignKey(d => d.IdUsers)
@@ -595,12 +566,8 @@ public partial class CesiZenDbContext : DbContext
                 .HasColumnName("id");
             entity.Property(e => e.AccountActivated).HasColumnName("account_activated");
             entity.Property(e => e.Active).HasColumnName("active");
-            entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("creation_time");
-            entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deletion_time");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
             entity.Property(e => e.Email)
                 .HasMaxLength(255)
                 .HasColumnName("email");
@@ -611,21 +578,15 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.LastName)
                 .HasMaxLength(255)
                 .HasColumnName("last_name");
-            entity.Property(e => e.LockedUntil)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("locked_until");
-            entity.Property(e => e.MemberSince)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("member_since");
+            entity.Property(e => e.LockedUntil).HasColumnName("locked_until");
+            entity.Property(e => e.MemberSince).HasColumnName("member_since");
             entity.Property(e => e.PasswordHash).HasColumnName("password_hash");
             entity.Property(e => e.ThumbnailUrl).HasColumnName("thumbnail_url");
-            entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("update_time");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
 
             entity.HasOne(d => d.IdUserSavedConfigurationsNavigation).WithMany(p => p.Users)
                 .HasForeignKey(d => d.IdUserSavedConfigurations)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("users_id_user_saved_configurations_fk");
         });
 
@@ -638,12 +599,8 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.Id)
                 .ValueGeneratedNever()
                 .HasColumnName("id");
-            entity.Property(e => e.CreationTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("creation_time");
-            entity.Property(e => e.DeletionTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deletion_time");
+            entity.Property(e => e.CreationTime).HasColumnName("creation_time");
+            entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
             entity.Property(e => e.Difficulty).HasColumnName("difficulty");
             entity.Property(e => e.DurationMinutes).HasColumnName("duration_minutes");
             entity.Property(e => e.Exhalation).HasColumnName("exhalation");
@@ -659,9 +616,7 @@ public partial class CesiZenDbContext : DbContext
                 .HasColumnName("objective");
             entity.Property(e => e.Retention1).HasColumnName("retention1");
             entity.Property(e => e.Retention2).HasColumnName("retention2");
-            entity.Property(e => e.UpdateTime)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("update_time");
+            entity.Property(e => e.UpdateTime).HasColumnName("update_time");
         });
 
         OnModelCreatingPartial(modelBuilder);
