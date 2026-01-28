@@ -66,32 +66,44 @@ public class DocumentationService : IDocumentationService
             {
                 var linkPath = match.Groups[1].Value;
 
-                // Handle relative paths
-                if (linkPath.StartsWith("../"))
+                // Start with current path segments
+                var segments = new List<string>(pathSegments.Select(s => s.ToLowerInvariant()));
+
+                // Remove leading "./" if present
+                if (linkPath.StartsWith("./"))
                 {
-                    // Go up one level from current path
-                    var segments = new List<string>(pathSegments.Select(s => s.ToLowerInvariant()));
-                    var relativeParts = linkPath.Split('/');
-
-                    foreach (var part in relativeParts)
-                    {
-                        if (part == "..")
-                        {
-                            if (segments.Count > 0)
-                                segments.RemoveAt(segments.Count - 1);
-                        }
-                        else if (!string.IsNullOrEmpty(part))
-                        {
-                            segments.Add(part.ToLowerInvariant());
-                        }
-                    }
-
-                    return $"href=\"/api/public/docs/{string.Join("/", segments)}\"";
+                    linkPath = linkPath.Substring(2);
                 }
 
-                // Simple filename in same directory
-                var docName = linkPath.Split('/').Last();
-                return $"href=\"/api/public/docs/{basePath}/{docName}\"";
+                // Process the link path
+                var linkParts = linkPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (var part in linkParts)
+                {
+                    if (part == "..")
+                    {
+                        // Go up one level
+                        if (segments.Count > 0)
+                            segments.RemoveAt(segments.Count - 1);
+                    }
+                    else if (!string.IsNullOrEmpty(part))
+                    {
+                        // Add to path
+                        segments.Add(part.ToLowerInvariant());
+                    }
+                }
+
+                // Remove "readme" from the end if present, since the service auto-finds README.md
+                if (segments.Count > 0 && segments[segments.Count - 1] == "readme")
+                {
+                    segments.RemoveAt(segments.Count - 1);
+                }
+
+                // Build final URL
+                var finalPath = string.Join("/", segments);
+                return string.IsNullOrEmpty(finalPath)
+                    ? "href=\"/api/public/docs\""
+                    : $"href=\"/api/public/docs/{finalPath}\"";
             },
             RegexOptions.IgnoreCase
         );
@@ -113,7 +125,7 @@ public class DocumentationService : IDocumentationService
     <header class=""doc-header"">
         <div class=""doc-header-content"">
             <h1 class=""doc-title"">CesiZen Documentation</h1>
-            <a href=""/api/public/docs/integration/authentification"" class=""home-button"">Home</a>
+            <a href=""/api/public/docs"" class=""home-button"">Home</a>
         </div>
     </header>
     <div class=""markdown-body"">
