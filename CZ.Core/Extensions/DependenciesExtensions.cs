@@ -5,6 +5,9 @@ using api.CZ.Data.EFCore;
 using api.CZ.Features.AdminEmailConfirmationTokens.Factories;
 using api.CZ.Features.AdminEmailConfirmationTokens.Repositories;
 using api.CZ.Features.AdminEmailConfirmationTokens.Services;
+using api.CZ.Features.AdminLogs.Factories;
+using api.CZ.Features.AdminLogs.Repositories;
+using api.CZ.Features.AdminLogs.Services;
 using api.CZ.Features.AdminPasswordResetTokens.Factories;
 using api.CZ.Features.AdminPasswordResetTokens.Repositories;
 using api.CZ.Features.AdminPasswordResetTokens.Services;
@@ -13,7 +16,25 @@ using api.CZ.Features.AdminSessions.Repositories;
 using api.CZ.Features.AdminSessions.Services;
 using api.CZ.Features.Administrators.Factories;
 using api.CZ.Features.Administrators.Repositories;
+using api.CZ.Features.Administrators.Services;
 using api.CZ.Features.Authentifications.Services;
+using api.CZ.Features.Bookmarks.Factories;
+using api.CZ.Features.Bookmarks.Repositories;
+using api.CZ.Features.Bookmarks.Services;
+using api.CZ.Features.Configurations.Repositories;
+using api.CZ.Features.Configurations.Services;
+using api.CZ.Features.InformationPages.Repositories;
+using api.CZ.Features.InformationPages.Services;
+using api.CZ.Features.InformationTags.Repositories;
+using api.CZ.Features.InformationTags.Services;
+using api.CZ.Features.NavigationMenus.Repositories;
+using api.CZ.Features.NavigationMenus.Services;
+using api.CZ.Features.PasswordsInfos.Repositories;
+using api.CZ.Features.PasswordsInfos.Services;
+using api.CZ.Features.PasswordHistories.Repositories;
+using api.CZ.Features.PasswordHistories.Services;
+using api.CZ.Features.UserSavedConfigurations.Repositories;
+using api.CZ.Features.UserSavedConfigurations.Services;
 using api.CZ.Features.Documentation.Services;
 using api.CZ.Features.EmailConfirmationTokens.Factories;
 using api.CZ.Features.EmailConfirmationTokens.Repositories;
@@ -22,6 +43,9 @@ using api.CZ.Features.HealthChecks.Services;
 using api.CZ.Features.PasswordResetTokens.Factories;
 using api.CZ.Features.PasswordResetTokens.Repositories;
 using api.CZ.Features.PasswordResetTokens.Services;
+using api.CZ.Features.Quizzes.Factories;
+using api.CZ.Features.Quizzes.Repositories;
+using api.CZ.Features.Quizzes.Services;
 using api.CZ.Features.Sessions.Factories;
 using api.CZ.Features.Sessions.Repositories;
 using api.CZ.Features.Sessions.Services;
@@ -68,6 +92,13 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IAdminEmailConfirmationTokenFactory, AdminEmailConfirmationTokenFactory>();
         builder.Services.AddScoped<IAdminPasswordResetTokenFactory, AdminPasswordResetTokenFactory>();
         builder.Services.AddScoped<IAdminSessionFactory, AdminSessionFactory>();
+        builder.Services.AddScoped<IAdminLogFactory, AdminLogFactory>();
+
+        // Bookmark factories
+        builder.Services.AddScoped<IBookmarkFactory, BookmarkFactory>();
+
+        // Quiz factories
+        builder.Services.AddScoped<IQuizzFactory, QuizzFactory>();
     }
 
     private static void AddServices(this WebApplicationBuilder builder)
@@ -87,9 +118,40 @@ public static class DependenciesExtensions
 
         // Admin services
         builder.Services.AddScoped<IAdminAuthentificationService, AdminAuthentificationService>();
+        builder.Services.AddScoped<IAdministratorService, AdministratorService>();
         builder.Services.AddScoped<IAdminEmailConfirmationTokenService, AdminEmailConfirmationTokenService>();
         builder.Services.AddScoped<IAdminPasswordResetTokenService, AdminPasswordResetTokenService>();
         builder.Services.AddScoped<IAdminSessionService, AdminSessionService>();
+        builder.Services.AddScoped<IAdminLogService, AdminLogService>();
+        builder.Services.AddScoped<IAdminActionLogger, AdminActionLogger>();
+
+        // Bookmark services
+        builder.Services.AddScoped<IBookmarkService, BookmarkService>();
+
+        // Quiz services
+        builder.Services.AddScoped<IQuizzService, QuizzService>();
+
+        // Configuration services
+        builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
+
+        // InformationPage services
+        builder.Services.AddScoped<IInformationPageService, InformationPageService>();
+
+        // InformationTag services
+        builder.Services.AddScoped<IInformationTagService, InformationTagService>();
+
+        // NavigationMenu services
+        builder.Services.AddScoped<INavigationMenuService, NavigationMenuService>();
+
+        // PasswordsInfo services
+        builder.Services.AddScoped<IPasswordsInfoService, PasswordsInfoService>();
+
+        // PasswordHistory services
+        builder.Services.AddScoped<IPasswordHistoryService, PasswordHistoryService>();
+        builder.Services.AddScoped<IPasswordHistoryManager, PasswordHistoryManager>();
+
+        // UserSavedConfiguration services
+        builder.Services.AddScoped<IUserSavedConfigurationService, UserSavedConfigurationService>();
     }
 
     private static void AddRepositories(this WebApplicationBuilder builder)
@@ -105,6 +167,36 @@ public static class DependenciesExtensions
         builder.Services.AddScoped<IAdminEmailConfirmationTokenRepository, AdminEmailConfirmationTokenRepository>();
         builder.Services.AddScoped<IAdminPasswordResetTokenRepository, AdminPasswordResetTokenRepository>();
         builder.Services.AddScoped<IAdminSessionRepository, AdminSessionRepository>();
+        builder.Services.AddScoped<IAdminLogRepository, AdminLogRepository>();
+
+        // Bookmark repositories
+        builder.Services.AddScoped<IBookmarkRepository, BookmarkRepository>();
+
+        // Quiz repositories
+        builder.Services.AddScoped<IQuizzRepository, QuizzRepository>();
+        builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
+        builder.Services.AddScoped<IResponsesOptionRepository, ResponsesOptionRepository>();
+
+        // Configuration repositories
+        builder.Services.AddScoped<IConfigurationRepository, ConfigurationRepository>();
+
+        // InformationPage repositories
+        builder.Services.AddScoped<IInformationPageRepository, InformationPageRepository>();
+
+        // InformationTag repositories
+        builder.Services.AddScoped<IInformationTagRepository, InformationTagRepository>();
+
+        // NavigationMenu repositories
+        builder.Services.AddScoped<INavigationMenuRepository, NavigationMenuRepository>();
+
+        // PasswordsInfo repositories
+        builder.Services.AddScoped<IPasswordsInfoRepository, PasswordsInfoRepository>();
+
+        // PasswordHistory repositories
+        builder.Services.AddScoped<IPasswordHistoryRepository, PasswordHistoryRepository>();
+
+        // UserSavedConfiguration repositories
+        builder.Services.AddScoped<IUserSavedConfigurationRepository, UserSavedConfigurationRepository>();
     }
     
     private static void AddSimply(this WebApplicationBuilder builder, int memorySize, int iterations,

@@ -7,7 +7,7 @@ using api.CZ.Features.Authentifications.DTOs;
 namespace api.CZ.Features.Authentifications;
 
 [ApiController]
-[Route("user")]
+[Route("api/user")]
 public class UserAuthentificationController : ControllerBase
 {
     private readonly IAuthentificationService _service;

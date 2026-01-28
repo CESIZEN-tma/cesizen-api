@@ -8,7 +8,7 @@ namespace api.CZ.Features.HealthChecks;
 
 
 [ApiController]
-[Route("/public")]
+[Route("api/public")]
 public class HealthCheckController : ControllerBase
 {
     private readonly IHealthCheckService _healthCheckService;
@@ -28,7 +28,7 @@ public class HealthCheckController : ControllerBase
     /// <remarks>
     /// This endpoint is only accessible to development environnment
     /// </remarks>
-    [HttpGet("/public/health-check")]
+    [HttpGet("health-check")]
     [AllowAnonymous]
     public async Task<IActionResult> CheckHealth(CancellationToken cancellationToken)
     {
