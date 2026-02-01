@@ -6,6 +6,7 @@ using api.CZ.Core.ResultPattern;
 using api.CZ.Core.Services;
 using api.CZ.Features.Authentifications.Services;
 using api.CZ.Features.EmailConfirmationTokens.Services;
+using api.CZ.Features.PasswordHistories.Services;
 using api.CZ.Features.PasswordResetTokens.Services;
 using api.CZ.Features.Sessions.Models;
 using api.CZ.Features.Sessions.Services;
@@ -26,6 +27,7 @@ public class AuthentificationServiceSessionTests
     private readonly Mock<IEmailConfirmationTokenService> _mockEmailConfirmationTokenService;
     private readonly Mock<IPasswordResetTokenService> _mockPasswordResetTokenService;
     private readonly Mock<ISessionService> _mockSessionService;
+    private readonly Mock<IPasswordHistoryManager> _mockPasswordHistoryManager;
     private readonly Mock<ILogger<AuthentificationService>> _mockLogger;
     private readonly AuthentificationService _sut;
 
@@ -38,6 +40,7 @@ public class AuthentificationServiceSessionTests
         _mockEmailConfirmationTokenService = new Mock<IEmailConfirmationTokenService>();
         _mockPasswordResetTokenService = new Mock<IPasswordResetTokenService>();
         _mockSessionService = new Mock<ISessionService>();
+        _mockPasswordHistoryManager = new Mock<IPasswordHistoryManager>();
         _mockLogger = new Mock<ILogger<AuthentificationService>>();
 
         _sut = new AuthentificationService(
@@ -48,6 +51,7 @@ public class AuthentificationServiceSessionTests
             _mockEmailConfirmationTokenService.Object,
             _mockPasswordResetTokenService.Object,
             _mockSessionService.Object,
+            _mockPasswordHistoryManager.Object,
             _mockLogger.Object);
     }
 
