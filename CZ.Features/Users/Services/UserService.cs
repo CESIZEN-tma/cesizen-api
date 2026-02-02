@@ -1,5 +1,6 @@
 using api.CZ.Features.Users.Repositories;
 using api.CZ.Features.Users.UserDtos;
+using api.CZ.Features.Users.Extensions;
 using api.CZ.Features.AdminLogs.Services;
 using api.CZ.Features.AdminLogs.Enums;
 
@@ -23,17 +24,7 @@ public class UserService : IUserService
         if (user == null || user.DeletionTime != null)
             return null;
 
-        return new GetUserProfileDto
-        {
-            Id = user.Id,
-            Email = user.Email,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            MemberSince = user.MemberSince,
-            ThumbnailUrl = user.ThumbnailUrl,
-            AccountActivated = user.AccountActivated,
-            Active = user.Active
-        };
+        return user.ToProfileDto();
     }
 
     public async Task<GetUserProfileDto?> UpdateProfileAsync(Guid userId, UpdateUserProfileDto dto)
@@ -50,17 +41,7 @@ public class UserService : IUserService
 
         await _repository.UpdateAsync(user);
 
-        return new GetUserProfileDto
-        {
-            Id = user.Id,
-            Email = user.Email,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            MemberSince = user.MemberSince,
-            ThumbnailUrl = user.ThumbnailUrl,
-            AccountActivated = user.AccountActivated,
-            Active = user.Active
-        };
+        return user.ToProfileDto();
     }
 
     public async Task<bool> DeleteAccountAsync(Guid userId)

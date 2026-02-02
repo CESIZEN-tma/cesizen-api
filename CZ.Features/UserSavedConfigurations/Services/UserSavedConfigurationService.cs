@@ -1,4 +1,5 @@
 using api.CZ.Features.UserSavedConfigurations.DTOs;
+using api.CZ.Features.UserSavedConfigurations.Extensions;
 using api.CZ.Features.UserSavedConfigurations.Models;
 using api.CZ.Features.UserSavedConfigurations.Repositories;
 using api.CZ.Features.Quizzes.Repositories;
@@ -28,21 +29,7 @@ public class UserSavedConfigurationService : IUserSavedConfigurationService
     {
         var configurations = await _repository.ListAsync(c => c.DeletionTime == null);
 
-        return configurations.Select(c => new GetUserSavedConfigurationDto
-        {
-            Id = c.Id,
-            Name = c.Name,
-            Inhalation = c.Inhalation,
-            Retention1 = c.Retention1,
-            Exhalation = c.Exhalation,
-            Retention2 = c.Retention2,
-            DurationMinutes = c.DurationMinutes,
-            Difficulty = c.Difficulty,
-            Objective = c.Objective,
-            GuidanceType = c.GuidanceType,
-            CreationTime = c.CreationTime,
-            UpdateTime = c.UpdateTime
-        });
+        return configurations.Select(c => c.ToDto());
     }
 
     public async Task<GetUserSavedConfigurationDto?> GetByIdAsync(Guid id)
@@ -52,21 +39,7 @@ public class UserSavedConfigurationService : IUserSavedConfigurationService
         if (configuration == null || configuration.DeletionTime != null)
             return null;
 
-        return new GetUserSavedConfigurationDto
-        {
-            Id = configuration.Id,
-            Name = configuration.Name,
-            Inhalation = configuration.Inhalation,
-            Retention1 = configuration.Retention1,
-            Exhalation = configuration.Exhalation,
-            Retention2 = configuration.Retention2,
-            DurationMinutes = configuration.DurationMinutes,
-            Difficulty = configuration.Difficulty,
-            Objective = configuration.Objective,
-            GuidanceType = configuration.GuidanceType,
-            CreationTime = configuration.CreationTime,
-            UpdateTime = configuration.UpdateTime
-        };
+        return configuration.ToDto();
     }
 
     public async Task<GetUserSavedConfigurationDto?> CreateAsync(CreateUserSavedConfigurationDto dto)
@@ -88,21 +61,7 @@ public class UserSavedConfigurationService : IUserSavedConfigurationService
 
         await _repository.AddAsync(configuration);
 
-        return new GetUserSavedConfigurationDto
-        {
-            Id = configuration.Id,
-            Name = configuration.Name,
-            Inhalation = configuration.Inhalation,
-            Retention1 = configuration.Retention1,
-            Exhalation = configuration.Exhalation,
-            Retention2 = configuration.Retention2,
-            DurationMinutes = configuration.DurationMinutes,
-            Difficulty = configuration.Difficulty,
-            Objective = configuration.Objective,
-            GuidanceType = configuration.GuidanceType,
-            CreationTime = configuration.CreationTime,
-            UpdateTime = configuration.UpdateTime
-        };
+        return configuration.ToDto();
     }
 
     public async Task<GetUserSavedConfigurationDto?> UpdateAsync(Guid id, UpdateUserSavedConfigurationDto dto)
@@ -125,21 +84,7 @@ public class UserSavedConfigurationService : IUserSavedConfigurationService
 
         await _repository.UpdateAsync(configuration);
 
-        return new GetUserSavedConfigurationDto
-        {
-            Id = configuration.Id,
-            Name = configuration.Name,
-            Inhalation = configuration.Inhalation,
-            Retention1 = configuration.Retention1,
-            Exhalation = configuration.Exhalation,
-            Retention2 = configuration.Retention2,
-            DurationMinutes = configuration.DurationMinutes,
-            Difficulty = configuration.Difficulty,
-            Objective = configuration.Objective,
-            GuidanceType = configuration.GuidanceType,
-            CreationTime = configuration.CreationTime,
-            UpdateTime = configuration.UpdateTime
-        };
+        return configuration.ToDto();
     }
 
     public async Task<bool> DeleteAsync(Guid id)
@@ -265,21 +210,7 @@ public class UserSavedConfigurationService : IUserSavedConfigurationService
 
         await _repository.AddAsync(userSavedConfiguration);
 
-        return new GetUserSavedConfigurationDto
-        {
-            Id = userSavedConfiguration.Id,
-            Name = userSavedConfiguration.Name,
-            Inhalation = userSavedConfiguration.Inhalation,
-            Retention1 = userSavedConfiguration.Retention1,
-            Exhalation = userSavedConfiguration.Exhalation,
-            Retention2 = userSavedConfiguration.Retention2,
-            DurationMinutes = userSavedConfiguration.DurationMinutes,
-            Difficulty = userSavedConfiguration.Difficulty,
-            Objective = userSavedConfiguration.Objective,
-            GuidanceType = userSavedConfiguration.GuidanceType,
-            CreationTime = userSavedConfiguration.CreationTime,
-            UpdateTime = userSavedConfiguration.UpdateTime
-        };
+        return userSavedConfiguration.ToDto();
     }
 
     private int ApplyNumericOperation(int currentValue, string operation, string value)

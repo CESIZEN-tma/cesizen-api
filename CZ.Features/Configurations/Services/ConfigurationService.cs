@@ -1,5 +1,6 @@
 using api.CZ.Features.AdminLogs.Services;
 using api.CZ.Features.Configurations.DTOs;
+using api.CZ.Features.Configurations.Extensions;
 using api.CZ.Features.Configurations.Models;
 using api.CZ.Features.Configurations.Repositories;
 
@@ -19,23 +20,7 @@ public class ConfigurationService : IConfigurationService
     public async Task<IEnumerable<GetConfigurationDto>> GetAllAsync()
     {
         var configurations = await _repository.ListAsync(c => c.DeletionTime == null);
-
-        return configurations.Select(c => new GetConfigurationDto
-        {
-            Id = c.Id,
-            Name = c.Name,
-            Inhalation = c.Inhalation,
-            Retention1 = c.Retention1,
-            Exhalation = c.Exhalation,
-            Retention2 = c.Retention2,
-            DurationMinutes = c.DurationMinutes,
-            Difficulty = c.Difficulty,
-            Objective = c.Objective,
-            GuidanceType = c.GuidanceType,
-            CreationTime = c.CreationTime,
-            UpdateTime = c.UpdateTime,
-            IdAdministrators = c.IdAdministrators
-        });
+        return configurations.Select(c => c.ToDto());
     }
 
     public async Task<GetConfigurationDto?> GetByIdAsync(Guid id)
@@ -45,22 +30,7 @@ public class ConfigurationService : IConfigurationService
         if (configuration == null || configuration.DeletionTime != null)
             return null;
 
-        return new GetConfigurationDto
-        {
-            Id = configuration.Id,
-            Name = configuration.Name,
-            Inhalation = configuration.Inhalation,
-            Retention1 = configuration.Retention1,
-            Exhalation = configuration.Exhalation,
-            Retention2 = configuration.Retention2,
-            DurationMinutes = configuration.DurationMinutes,
-            Difficulty = configuration.Difficulty,
-            Objective = configuration.Objective,
-            GuidanceType = configuration.GuidanceType,
-            CreationTime = configuration.CreationTime,
-            UpdateTime = configuration.UpdateTime,
-            IdAdministrators = configuration.IdAdministrators
-        };
+        return configuration.ToDto();
     }
 
     public async Task<GetConfigurationDto?> CreateAsync(CreateConfigurationDto dto, Guid adminId)
@@ -87,22 +57,7 @@ public class ConfigurationService : IConfigurationService
         await _actionLogger.LogCreateAsync(adminId, "Configuration", configuration.Id,
             $"Created configuration '{configuration.Name}'");
 
-        return new GetConfigurationDto
-        {
-            Id = configuration.Id,
-            Name = configuration.Name,
-            Inhalation = configuration.Inhalation,
-            Retention1 = configuration.Retention1,
-            Exhalation = configuration.Exhalation,
-            Retention2 = configuration.Retention2,
-            DurationMinutes = configuration.DurationMinutes,
-            Difficulty = configuration.Difficulty,
-            Objective = configuration.Objective,
-            GuidanceType = configuration.GuidanceType,
-            CreationTime = configuration.CreationTime,
-            UpdateTime = configuration.UpdateTime,
-            IdAdministrators = configuration.IdAdministrators
-        };
+        return configuration.ToDto();
     }
 
     public async Task<GetConfigurationDto?> UpdateAsync(Guid id, UpdateConfigurationDto dto, Guid adminId)
@@ -129,22 +84,7 @@ public class ConfigurationService : IConfigurationService
         await _actionLogger.LogUpdateAsync(adminId, "Configuration", configuration.Id,
             $"Updated configuration '{configuration.Name}'");
 
-        return new GetConfigurationDto
-        {
-            Id = configuration.Id,
-            Name = configuration.Name,
-            Inhalation = configuration.Inhalation,
-            Retention1 = configuration.Retention1,
-            Exhalation = configuration.Exhalation,
-            Retention2 = configuration.Retention2,
-            DurationMinutes = configuration.DurationMinutes,
-            Difficulty = configuration.Difficulty,
-            Objective = configuration.Objective,
-            GuidanceType = configuration.GuidanceType,
-            CreationTime = configuration.CreationTime,
-            UpdateTime = configuration.UpdateTime,
-            IdAdministrators = configuration.IdAdministrators
-        };
+        return configuration.ToDto();
     }
 
     public async Task<bool> DeleteAsync(Guid id, Guid adminId)

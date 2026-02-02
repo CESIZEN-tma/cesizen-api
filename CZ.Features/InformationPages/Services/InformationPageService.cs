@@ -1,5 +1,6 @@
 using api.CZ.Features.AdminLogs.Services;
 using api.CZ.Features.InformationPages.DTOs;
+using api.CZ.Features.InformationPages.Extensions;
 using api.CZ.Features.InformationPages.Models;
 using api.CZ.Features.InformationPages.Repositories;
 
@@ -20,20 +21,7 @@ public class InformationPageService : IInformationPageService
     {
         var pages = await _repository.ListAsync(p => p.DeletionTime == null);
 
-        return pages.Select(p => new GetInformationPageDto
-        {
-            Id = p.Id,
-            Title = p.Title,
-            Description = p.Description,
-            Content = p.Content,
-            ContentType = p.ContentType,
-            CurrentlyEditing = p.CurrentlyEditing,
-            Status = p.Status,
-            Active = p.Active,
-            CreationTime = p.CreationTime,
-            UpdateTime = p.UpdateTime,
-            IdAdministrators = p.IdAdministrators
-        });
+        return pages.Select(p => p.ToDto());
     }
 
     public async Task<GetInformationPageDto?> GetByIdAsync(Guid id)
@@ -43,20 +31,7 @@ public class InformationPageService : IInformationPageService
         if (page == null || page.DeletionTime != null)
             return null;
 
-        return new GetInformationPageDto
-        {
-            Id = page.Id,
-            Title = page.Title,
-            Description = page.Description,
-            Content = page.Content,
-            ContentType = page.ContentType,
-            CurrentlyEditing = page.CurrentlyEditing,
-            Status = page.Status,
-            Active = page.Active,
-            CreationTime = page.CreationTime,
-            UpdateTime = page.UpdateTime,
-            IdAdministrators = page.IdAdministrators
-        };
+        return page.ToDto();
     }
 
     public async Task<GetInformationPageDto?> CreateAsync(CreateInformationPageDto dto, Guid adminId)
@@ -81,20 +56,7 @@ public class InformationPageService : IInformationPageService
         await _actionLogger.LogCreateAsync(adminId, "InformationPage", page.Id,
             $"Created information page '{page.Title}'");
 
-        return new GetInformationPageDto
-        {
-            Id = page.Id,
-            Title = page.Title,
-            Description = page.Description,
-            Content = page.Content,
-            ContentType = page.ContentType,
-            CurrentlyEditing = page.CurrentlyEditing,
-            Status = page.Status,
-            Active = page.Active,
-            CreationTime = page.CreationTime,
-            UpdateTime = page.UpdateTime,
-            IdAdministrators = page.IdAdministrators
-        };
+        return page.ToDto();
     }
 
     public async Task<GetInformationPageDto?> UpdateAsync(Guid id, UpdateInformationPageDto dto, Guid adminId)
@@ -119,20 +81,7 @@ public class InformationPageService : IInformationPageService
         await _actionLogger.LogUpdateAsync(adminId, "InformationPage", page.Id,
             $"Updated information page '{page.Title}'");
 
-        return new GetInformationPageDto
-        {
-            Id = page.Id,
-            Title = page.Title,
-            Description = page.Description,
-            Content = page.Content,
-            ContentType = page.ContentType,
-            CurrentlyEditing = page.CurrentlyEditing,
-            Status = page.Status,
-            Active = page.Active,
-            CreationTime = page.CreationTime,
-            UpdateTime = page.UpdateTime,
-            IdAdministrators = page.IdAdministrators
-        };
+        return page.ToDto();
     }
 
     public async Task<bool> DeleteAsync(Guid id, Guid adminId)

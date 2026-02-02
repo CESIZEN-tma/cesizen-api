@@ -1,4 +1,5 @@
 using api.CZ.Features.Administrators.DTOs;
+using api.CZ.Features.Administrators.Extensions;
 using api.CZ.Features.Administrators.Factories;
 using api.CZ.Features.Administrators.Models;
 using api.CZ.Features.Administrators.Repositories;
@@ -29,19 +30,7 @@ public class AdministratorService : IAdministratorService
     public async Task<IEnumerable<GetAdministratorDto>> GetAllAsync()
     {
         var admins = await _repository.ListAsync(a => a.DeletionTime == null);
-
-        return admins.Select(a => new GetAdministratorDto
-        {
-            Id = a.Id,
-            Email = a.Email,
-            FirstName = a.FirstName,
-            LastName = a.LastName,
-            MemberSince = a.MemberSince,
-            ThumbnailUrl = a.ThumbnailUrl,
-            AccountActivated = a.AccountActivated,
-            CreationTime = a.CreationTime,
-            UpdateTime = a.UpdateTime
-        });
+        return admins.Select(a => a.ToDto());
     }
 
     public async Task<GetAdministratorDto?> GetByIdAsync(Guid id)
@@ -51,18 +40,7 @@ public class AdministratorService : IAdministratorService
         if (admin == null || admin.DeletionTime != null)
             return null;
 
-        return new GetAdministratorDto
-        {
-            Id = admin.Id,
-            Email = admin.Email,
-            FirstName = admin.FirstName,
-            LastName = admin.LastName,
-            MemberSince = admin.MemberSince,
-            ThumbnailUrl = admin.ThumbnailUrl,
-            AccountActivated = admin.AccountActivated,
-            CreationTime = admin.CreationTime,
-            UpdateTime = admin.UpdateTime
-        };
+        return admin.ToDto();
     }
 
     public async Task<GetAdministratorDto?> CreateAsync(CreateAdministratorDto dto, Guid creatorAdminId)
@@ -79,18 +57,7 @@ public class AdministratorService : IAdministratorService
         await _actionLogger.LogCreateAsync(creatorAdminId, "Administrator", admin.Id,
             $"Created administrator account for {admin.Email}");
 
-        return new GetAdministratorDto
-        {
-            Id = admin.Id,
-            Email = admin.Email,
-            FirstName = admin.FirstName,
-            LastName = admin.LastName,
-            MemberSince = admin.MemberSince,
-            ThumbnailUrl = admin.ThumbnailUrl,
-            AccountActivated = admin.AccountActivated,
-            CreationTime = admin.CreationTime,
-            UpdateTime = admin.UpdateTime
-        };
+        return admin.ToDto();
     }
 
     public async Task<GetAdministratorDto?> UpdateAsync(Guid id, UpdateAdministratorDto dto, Guid adminId)
@@ -110,18 +77,7 @@ public class AdministratorService : IAdministratorService
         await _actionLogger.LogUpdateAsync(adminId, "Administrator", id,
             $"Updated administrator profile for {admin.Email}");
 
-        return new GetAdministratorDto
-        {
-            Id = admin.Id,
-            Email = admin.Email,
-            FirstName = admin.FirstName,
-            LastName = admin.LastName,
-            MemberSince = admin.MemberSince,
-            ThumbnailUrl = admin.ThumbnailUrl,
-            AccountActivated = admin.AccountActivated,
-            CreationTime = admin.CreationTime,
-            UpdateTime = admin.UpdateTime
-        };
+        return admin.ToDto();
     }
 
     public async Task<bool> DeleteAsync(Guid id, Guid adminId)

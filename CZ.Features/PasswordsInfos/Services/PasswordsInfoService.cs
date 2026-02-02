@@ -1,4 +1,5 @@
 using api.CZ.Features.PasswordsInfos.DTOs;
+using api.CZ.Features.PasswordsInfos.Extensions;
 using api.CZ.Features.PasswordsInfos.Models;
 using api.CZ.Features.PasswordsInfos.Repositories;
 
@@ -17,15 +18,7 @@ public class PasswordsInfoService : IPasswordsInfoService
     {
         var infos = await _repository.ListAsync(p => p.DeletionTime == null);
 
-        return infos.Select(p => new GetPasswordsInfoDto
-        {
-            Id = p.Id,
-            AttemptCount = p.AttemptCount,
-            LastLogin = p.LastLogin,
-            LastReset = p.LastReset,
-            CreationTime = p.CreationTime,
-            UpdateTime = p.UpdateTime
-        });
+        return infos.Select(p => p.ToDto());
     }
 
     public async Task<GetPasswordsInfoDto?> GetByIdAsync(Guid id)
@@ -35,15 +28,7 @@ public class PasswordsInfoService : IPasswordsInfoService
         if (info == null || info.DeletionTime != null)
             return null;
 
-        return new GetPasswordsInfoDto
-        {
-            Id = info.Id,
-            AttemptCount = info.AttemptCount,
-            LastLogin = info.LastLogin,
-            LastReset = info.LastReset,
-            CreationTime = info.CreationTime,
-            UpdateTime = info.UpdateTime
-        };
+        return info.ToDto();
     }
 
     public async Task<GetPasswordsInfoDto?> CreateAsync(CreatePasswordsInfoDto dto)
@@ -59,15 +44,7 @@ public class PasswordsInfoService : IPasswordsInfoService
 
         await _repository.AddAsync(info);
 
-        return new GetPasswordsInfoDto
-        {
-            Id = info.Id,
-            AttemptCount = info.AttemptCount,
-            LastLogin = info.LastLogin,
-            LastReset = info.LastReset,
-            CreationTime = info.CreationTime,
-            UpdateTime = info.UpdateTime
-        };
+        return info.ToDto();
     }
 
     public async Task<GetPasswordsInfoDto?> UpdateAsync(Guid id, UpdatePasswordsInfoDto dto)
@@ -89,15 +66,7 @@ public class PasswordsInfoService : IPasswordsInfoService
 
         await _repository.UpdateAsync(info);
 
-        return new GetPasswordsInfoDto
-        {
-            Id = info.Id,
-            AttemptCount = info.AttemptCount,
-            LastLogin = info.LastLogin,
-            LastReset = info.LastReset,
-            CreationTime = info.CreationTime,
-            UpdateTime = info.UpdateTime
-        };
+        return info.ToDto();
     }
 
     public async Task<bool> DeleteAsync(Guid id)

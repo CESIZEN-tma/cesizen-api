@@ -1,4 +1,5 @@
 using api.CZ.Features.Bookmarks.DTOs;
+using api.CZ.Features.Bookmarks.Extensions;
 using api.CZ.Features.Bookmarks.Factories;
 using api.CZ.Features.Bookmarks.Repositories;
 
@@ -19,13 +20,7 @@ public class BookmarkService : IBookmarkService
     {
         var bookmarks = await _repository.GetUserBookmarksAsync(userId);
 
-        return bookmarks.Select(b => new GetBookmarkDto
-        {
-            UserId = b.Id,
-            ConfigurationId = b.IdConfigurations,
-            ConfigurationName = b.IdConfigurationsNavigation?.Name ?? "Unknown",
-            CreationTime = b.CreationTime
-        });
+        return bookmarks.Select(b => b.ToDto());
     }
 
     public async Task<GetBookmarkDto> CreateBookmarkAsync(Guid userId, CreateBookmarkDto dto)
@@ -37,13 +32,7 @@ public class BookmarkService : IBookmarkService
         var bookmark = _factory.Create(userId, dto.ConfigurationId);
         await _repository.AddAsync(bookmark);
 
-        return new GetBookmarkDto
-        {
-            UserId = bookmark.Id,
-            ConfigurationId = bookmark.IdConfigurations,
-            ConfigurationName = "Configuration",
-            CreationTime = bookmark.CreationTime
-        };
+        return bookmark.ToDto();
     }
 
     public async Task<bool> DeleteBookmarkAsync(Guid userId, Guid configurationId)

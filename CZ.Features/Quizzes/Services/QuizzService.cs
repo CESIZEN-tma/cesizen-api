@@ -1,5 +1,6 @@
 using api.CZ.Features.AdminLogs.Services;
 using api.CZ.Features.Quizzes.DTOs;
+using api.CZ.Features.Quizzes.Extensions;
 using api.CZ.Features.Quizzes.Factories;
 using api.CZ.Features.Quizzes.Models;
 using api.CZ.Features.Quizzes.Repositories;
@@ -32,14 +33,7 @@ public class QuizzService : IQuizzService
     {
         var quizzes = await _quizzRepository.ListAsync(q => q.DeletionTime == null);
 
-        return quizzes.Select(q => new GetQuizzDto
-        {
-            Id = q.Id,
-            Nom = q.Nom,
-            Active = q.Active,
-            CreationTime = q.CreationTime,
-            QuestionCount = q.Questions.Count
-        });
+        return quizzes.Select(q => q.ToDto());
     }
 
     public async Task<GetQuizzDetailDto?> GetByIdAsync(Guid id)
@@ -139,14 +133,7 @@ public class QuizzService : IQuizzService
         await _actionLogger.LogUpdateAsync(adminId, "Quiz", quizz.Id,
             $"Updated quiz '{quizz.Nom}'");
 
-        return new GetQuizzDto
-        {
-            Id = quizz.Id,
-            Nom = quizz.Nom,
-            Active = quizz.Active,
-            CreationTime = quizz.CreationTime,
-            QuestionCount = quizz.Questions.Count
-        };
+        return quizz.ToDto();
     }
 
     public async Task<bool> DeleteAsync(Guid id, Guid adminId)

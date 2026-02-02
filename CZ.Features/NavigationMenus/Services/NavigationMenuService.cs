@@ -1,5 +1,6 @@
 using api.CZ.Features.AdminLogs.Services;
 using api.CZ.Features.NavigationMenus.DTOs;
+using api.CZ.Features.NavigationMenus.Extensions;
 using api.CZ.Features.NavigationMenus.Models;
 using api.CZ.Features.NavigationMenus.Repositories;
 
@@ -20,16 +21,7 @@ public class NavigationMenuService : INavigationMenuService
     {
         var menus = await _repository.ListAsync(m => m.DeletionTime == null);
 
-        return menus.OrderBy(m => m.Position).Select(m => new GetNavigationMenuDto
-        {
-            Id = m.Id,
-            Position = m.Position,
-            Label = m.Label,
-            Url = m.Url,
-            CurrentlyEditing = m.CurrentlyEditing,
-            CreationTime = m.CreationTime,
-            UpdateTime = m.UpdateTime
-        });
+        return menus.OrderBy(m => m.Position).Select(m => m.ToDto());
     }
 
     public async Task<GetNavigationMenuDto?> GetByIdAsync(Guid id)
@@ -39,16 +31,7 @@ public class NavigationMenuService : INavigationMenuService
         if (menu == null || menu.DeletionTime != null)
             return null;
 
-        return new GetNavigationMenuDto
-        {
-            Id = menu.Id,
-            Position = menu.Position,
-            Label = menu.Label,
-            Url = menu.Url,
-            CurrentlyEditing = menu.CurrentlyEditing,
-            CreationTime = menu.CreationTime,
-            UpdateTime = menu.UpdateTime
-        };
+        return menu.ToDto();
     }
 
     public async Task<GetNavigationMenuDto?> CreateAsync(CreateNavigationMenuDto dto, Guid adminId)
@@ -69,16 +52,7 @@ public class NavigationMenuService : INavigationMenuService
         await _actionLogger.LogCreateAsync(adminId, "NavigationMenu", menu.Id,
             $"Created navigation menu '{menu.Label}' at position {menu.Position}");
 
-        return new GetNavigationMenuDto
-        {
-            Id = menu.Id,
-            Position = menu.Position,
-            Label = menu.Label,
-            Url = menu.Url,
-            CurrentlyEditing = menu.CurrentlyEditing,
-            CreationTime = menu.CreationTime,
-            UpdateTime = menu.UpdateTime
-        };
+        return menu.ToDto();
     }
 
     public async Task<GetNavigationMenuDto?> UpdateAsync(Guid id, UpdateNavigationMenuDto dto, Guid adminId)
@@ -100,16 +74,7 @@ public class NavigationMenuService : INavigationMenuService
         await _actionLogger.LogUpdateAsync(adminId, "NavigationMenu", menu.Id,
             $"Updated navigation menu '{menu.Label}' at position {menu.Position}");
 
-        return new GetNavigationMenuDto
-        {
-            Id = menu.Id,
-            Position = menu.Position,
-            Label = menu.Label,
-            Url = menu.Url,
-            CurrentlyEditing = menu.CurrentlyEditing,
-            CreationTime = menu.CreationTime,
-            UpdateTime = menu.UpdateTime
-        };
+        return menu.ToDto();
     }
 
     public async Task<bool> DeleteAsync(Guid id, Guid adminId)

@@ -1,4 +1,5 @@
 using api.CZ.Features.InformationTags.DTOs;
+using api.CZ.Features.InformationTags.Extensions;
 using api.CZ.Features.InformationTags.Models;
 using api.CZ.Features.InformationTags.Repositories;
 using api.CZ.Features.AdminLogs.Services;
@@ -20,13 +21,7 @@ public class InformationTagService : IInformationTagService
     {
         var tags = await _repository.ListAsync(t => t.DeletionTime == null);
 
-        return tags.Select(t => new GetInformationTagDto
-        {
-            Id = t.Id,
-            Label = t.Label,
-            CreationTime = t.CreationTime,
-            UpdateTime = t.UpdateTime
-        });
+        return tags.Select(t => t.ToDto());
     }
 
     public async Task<GetInformationTagDto?> GetByIdAsync(Guid id)
@@ -36,13 +31,7 @@ public class InformationTagService : IInformationTagService
         if (tag == null || tag.DeletionTime != null)
             return null;
 
-        return new GetInformationTagDto
-        {
-            Id = tag.Id,
-            Label = tag.Label,
-            CreationTime = tag.CreationTime,
-            UpdateTime = tag.UpdateTime
-        };
+        return tag.ToDto();
     }
 
     public async Task<GetInformationTagDto?> CreateAsync(CreateInformationTagDto dto, Guid adminId)
@@ -59,13 +48,7 @@ public class InformationTagService : IInformationTagService
         await _actionLogger.LogCreateAsync(adminId, "InformationTag", tag.Id,
             $"Created information tag '{tag.Label}'");
 
-        return new GetInformationTagDto
-        {
-            Id = tag.Id,
-            Label = tag.Label,
-            CreationTime = tag.CreationTime,
-            UpdateTime = tag.UpdateTime
-        };
+        return tag.ToDto();
     }
 
     public async Task<GetInformationTagDto?> UpdateAsync(Guid id, UpdateInformationTagDto dto, Guid adminId)
@@ -83,13 +66,7 @@ public class InformationTagService : IInformationTagService
         await _actionLogger.LogUpdateAsync(adminId, "InformationTag", id,
             $"Updated information tag to '{tag.Label}'");
 
-        return new GetInformationTagDto
-        {
-            Id = tag.Id,
-            Label = tag.Label,
-            CreationTime = tag.CreationTime,
-            UpdateTime = tag.UpdateTime
-        };
+        return tag.ToDto();
     }
 
     public async Task<bool> DeleteAsync(Guid id, Guid adminId)
