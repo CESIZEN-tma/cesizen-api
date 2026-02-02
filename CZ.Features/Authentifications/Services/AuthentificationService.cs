@@ -71,7 +71,7 @@ public class AuthentificationService : IAuthentificationService
         var hash = _simplyAuthService.HashPassword(dto.Password);
 
         User newUserAccount = _userFactory.Create(dto.Email, dto.FirstName, dto.LastName, hash);
-        newUserAccount.MemberSince = DateTime.Now;
+        newUserAccount.MemberSince = DateTime.UtcNow;
         
         var newAccount = await _userRepository.AddAsync(newUserAccount);
 
