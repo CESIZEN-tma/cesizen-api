@@ -23,7 +23,7 @@ public class BookmarkService : IBookmarkService
         return bookmarks.Select(b => b.ToDto());
     }
 
-    public async Task<GetBookmarkDto> CreateBookmarkAsync(Guid userId, CreateBookmarkDto dto)
+    public async Task<GetBookmarkDto?> CreateBookmarkAsync(Guid userId, CreateBookmarkDto dto)
     {
         var exists = await _repository.GetUserBookmarkAsync(userId, dto.ConfigurationId);
         if (exists != null)

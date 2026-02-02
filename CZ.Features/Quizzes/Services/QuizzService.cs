@@ -71,7 +71,7 @@ public class QuizzService : IQuizzService
         };
     }
 
-    public async Task<GetQuizzDetailDto> CreateAsync(CreateQuizzDto dto, Guid adminId)
+    public async Task<GetQuizzDetailDto?> CreateAsync(CreateQuizzDto dto, Guid adminId)
     {
         var quizz = _quizzFactory.Create(dto.Nom);
         quizz.Active = dto.Active;

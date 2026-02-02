@@ -1,5 +1,5 @@
 using api.CZ.Features.Users.Repositories;
-using api.CZ.Features.Users.UserDtos;
+using api.CZ.Features.Users.DTOs;
 using api.CZ.Features.Users.Extensions;
 using api.CZ.Features.AdminLogs.Services;
 using api.CZ.Features.AdminLogs.Enums;

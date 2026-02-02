@@ -2,7 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using api.CZ.Features.Users.Services;
-using api.CZ.Features.Users.UserDtos;
+using api.CZ.Features.Users.DTOs;
 
 namespace api.CZ.Features.Users;
 

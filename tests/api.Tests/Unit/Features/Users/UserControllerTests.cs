@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using api.CZ.Features.Users;
 using api.CZ.Features.Users.Services;
-using api.CZ.Features.Users.UserDtos;
+using api.CZ.Features.Users.DTOs;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

@@ -1,4 +1,4 @@
-using api.CZ.Features.Users.UserDtos;
+using api.CZ.Features.Users.DTOs;
 
 namespace api.CZ.Features.Users.Services;
 

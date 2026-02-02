@@ -5,6 +5,6 @@ namespace api.CZ.Features.Bookmarks.Services;
 public interface IBookmarkService
 {
     Task<IEnumerable<GetBookmarkDto>> GetUserBookmarksAsync(Guid userId);
-    Task<GetBookmarkDto> CreateBookmarkAsync(Guid userId, CreateBookmarkDto dto);
+    Task<GetBookmarkDto?> CreateBookmarkAsync(Guid userId, CreateBookmarkDto dto);
     Task<bool> DeleteBookmarkAsync(Guid userId, Guid configurationId);
 }

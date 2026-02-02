@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace api.CZ.Features.Users.UserDtos;
+namespace api.CZ.Features.Users.DTOs;
 
 public class UpdateUserProfileDto
 {

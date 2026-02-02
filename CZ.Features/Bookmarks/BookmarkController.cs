@@ -42,7 +42,7 @@ public class BookmarkController : ControllerBase
         try
         {
             var bookmark = await _service.CreateBookmarkAsync(userId, dto);
-            return Created($"/api/bookmarks/{bookmark.ConfigurationId}", bookmark);
+            return CreatedAtAction(nameof(GetUserBookmarks), bookmark);
         }
         catch (InvalidOperationException ex)
         {

@@ -20,7 +20,9 @@
       "Bash(ls:*)",
       "Bash(xargs:*)",
       "Bash(dir /b \"CZ.Features\\\\Administrators\")",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
