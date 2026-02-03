@@ -26,6 +26,7 @@ public static class AppBuildingExtensions
     }
     private static void AddMiddlewares(this WebApplication app)
     {
+        app.UseAuthentication();
         app.UseAuthorization();
         app.UseMiddleware<ApiKeyMiddleware>();
         app.UseMiddleware<ExceptionMiddleware>();

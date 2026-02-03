@@ -1,16 +1,17 @@
+using api.CZ.Core.Services;
 using api.CZ.Features.AdminSessions.Models;
 
 namespace api.CZ.Features.AdminSessions.Services;
 
-public interface IAdminSessionService
+/// <summary>
+/// Session management service for administrator sessions.
+/// Inherits common session operations from IBaseSessionService.
+/// Provides admin-specific method names for clarity.
+/// </summary>
+public interface IAdminSessionService : IBaseSessionService<AdminSession>
 {
-    Task<AdminSession?> GetByRefreshToken(string refreshToken);
-    Task<AdminSession> CreateSession(Guid adminId, string refreshToken, DateTime expiresAt);
-    Task<bool> ConsumeSession(string refreshToken);
+    // Admin-specific method names (delegate to base interface methods)
     Task<bool> RevokeAllAdminSessions(Guid adminId);
-    Task<bool> RevokeSession(Guid sessionId);
-    Task CleanupExpiredSessions();
     Task<List<AdminSession>> GetActiveSessionsByAdminId(Guid adminId);
     Task<bool> RevokeSessionForAdmin(Guid sessionId, Guid adminId);
-    Task<bool> RevokeAllSessionsExceptCurrent(Guid adminId, Guid currentSessionId);
 }

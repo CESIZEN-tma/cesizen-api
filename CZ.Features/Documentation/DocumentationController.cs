@@ -17,9 +17,9 @@ public class DocumentationController : ControllerBase
     [HttpGet("{*path}")]
     public async Task<IActionResult> GetDocumentation(string? path = null)
     {
-        // Default to integration/authentification if no path provided
+        // Default to root README if no path provided
         var pathSegments = string.IsNullOrEmpty(path)
-            ? new[] { "INTEGRATION", "AUTHENTIFICATION" }
+            ? Array.Empty<string>()  // Empty array = root README.md
             : path.Split('/', StringSplitOptions.RemoveEmptyEntries)
                   .Select(p => p.ToUpperInvariant())
                   .ToArray();

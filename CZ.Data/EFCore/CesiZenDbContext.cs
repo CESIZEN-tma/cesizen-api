@@ -2,15 +2,23 @@
 using System.Collections.Generic;
 using api.CZ.Features.Administrators.Models;
 using api.CZ.Features.AdminEmailConfirmationTokens.Models;
+using api.CZ.Features.AdminLogs.Models;
 using api.CZ.Features.AdminPasswordResetTokens.Models;
 using api.CZ.Features.AdminSessions.Models;
+using api.CZ.Features.Bookmarks.Models;
+using api.CZ.Features.Configurations.Models;
 using api.CZ.Features.EmailConfirmationTokens.Models;
+using api.CZ.Features.InformationPages.Models;
+using api.CZ.Features.InformationTags.Models;
+using api.CZ.Features.NavigationMenus.Models;
 using api.CZ.Features.PasswordResetTokens.Models;
+using api.CZ.Features.PasswordHistories.Models;
+using api.CZ.Features.PasswordsInfos.Models;
+using api.CZ.Features.Quizzes.Models;
 using api.CZ.Features.Users.Models;
+using api.CZ.Features.UserSavedConfigurations.Models;
 using Microsoft.EntityFrameworkCore;
 using Session = api.CZ.Features.Sessions.Models.Session;
-
-using api.scaffoldBis;
 
 namespace api.CZ.Data.EFCore;
 
@@ -31,7 +39,7 @@ public partial class CesiZenDbContext : DbContext
 
     public virtual DbSet<AdminSession> AdminSessions { get; set; }
 
-    public virtual DbSet<Bookmark> Bookmarks { get; set; }
+    public virtual DbSet<api.CZ.Features.Bookmarks.Models.Bookmark> Bookmarks { get; set; }
 
     public virtual DbSet<Configuration> Configurations { get; set; }
 
@@ -49,11 +57,11 @@ public partial class CesiZenDbContext : DbContext
 
     public virtual DbSet<PasswordsInfo> PasswordsInfos { get; set; }
 
-    public virtual DbSet<Question> Questions { get; set; }
+    public virtual DbSet<api.CZ.Features.Quizzes.Models.Question> Questions { get; set; }
 
-    public virtual DbSet<Quizz> Quizzs { get; set; }
+    public virtual DbSet<api.CZ.Features.Quizzes.Models.Quizz> Quizzs { get; set; }
 
-    public virtual DbSet<ResponsesOption> ResponsesOptions { get; set; }
+    public virtual DbSet<api.CZ.Features.Quizzes.Models.ResponsesOption> ResponsesOptions { get; set; }
 
     public virtual DbSet<Session> Sessions { get; set; }
 
@@ -219,7 +227,7 @@ public partial class CesiZenDbContext : DbContext
                 .HasConstraintName("admin_session_id_administrators_fk");
         });
 
-        modelBuilder.Entity<Bookmark>(entity =>
+        modelBuilder.Entity<api.CZ.Features.Bookmarks.Models.Bookmark>(entity =>
         {
             entity.HasKey(e => new { e.Id, e.IdConfigurations }).HasName("bookmark_pk");
 
@@ -455,7 +463,7 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.UpdateTime).HasColumnName("update_time");
         });
 
-        modelBuilder.Entity<Question>(entity =>
+        modelBuilder.Entity<api.CZ.Features.Quizzes.Models.Question>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("questions_pk");
 
@@ -477,7 +485,7 @@ public partial class CesiZenDbContext : DbContext
                 .HasConstraintName("questions_id_quizz_fk");
         });
 
-        modelBuilder.Entity<Quizz>(entity =>
+        modelBuilder.Entity<api.CZ.Features.Quizzes.Models.Quizz>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("quizz_pk");
 
@@ -495,7 +503,7 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.UpdateTime).HasColumnName("update_time");
         });
 
-        modelBuilder.Entity<ResponsesOption>(entity =>
+        modelBuilder.Entity<api.CZ.Features.Quizzes.Models.ResponsesOption>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("responses_options_pk");
 

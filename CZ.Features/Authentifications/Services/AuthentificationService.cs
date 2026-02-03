@@ -2,6 +2,7 @@ using api.CZ.Core.ResultPattern;
 using api.CZ.Core.Services;
 using api.CZ.Features.Authentifications.DTOs;
 using api.CZ.Features.EmailConfirmationTokens.Services;
+using api.CZ.Features.PasswordHistories.Services;
 using api.CZ.Features.PasswordResetTokens.Services;
 using api.CZ.Features.Sessions.Services;
 using api.CZ.Features.Users.Factories;
@@ -26,6 +27,7 @@ public class AuthentificationService : IAuthentificationService
     private readonly IEmailConfirmationTokenService _emailConfirmationTokenService;
     private readonly IPasswordResetTokenService _passwordResetTokenService;
     private readonly ISessionService _sessionService;
+    private readonly IPasswordHistoryManager _passwordHistoryManager;
     private readonly ILogger<AuthentificationService> _logger;
 
     public AuthentificationService(
@@ -36,6 +38,7 @@ public class AuthentificationService : IAuthentificationService
         IEmailConfirmationTokenService emailConfirmationTokenService,
         IPasswordResetTokenService passwordResetTokenService,
         ISessionService sessionService,
+        IPasswordHistoryManager passwordHistoryManager,
         ILogger<AuthentificationService> logger)
     {
         _userRepository = userRepository;
@@ -45,6 +48,7 @@ public class AuthentificationService : IAuthentificationService
         _emailConfirmationTokenService = emailConfirmationTokenService;
         _passwordResetTokenService = passwordResetTokenService;
         _sessionService = sessionService;
+        _passwordHistoryManager = passwordHistoryManager;
         _logger = logger;
     }
 
@@ -67,7 +71,7 @@ public class AuthentificationService : IAuthentificationService
         var hash = _simplyAuthService.HashPassword(dto.Password);
 
         User newUserAccount = _userFactory.Create(dto.Email, dto.FirstName, dto.LastName, hash);
-        newUserAccount.MemberSince = DateTime.Now;
+        newUserAccount.MemberSince = DateTime.UtcNow;
         
         var newAccount = await _userRepository.AddAsync(newUserAccount);
 
@@ -111,6 +115,12 @@ public class AuthentificationService : IAuthentificationService
         {
             _logger.LogWarning("Login failed: account not activated for {UserId}", user.Id);
             return Result.Failure<SimplyAuthResponse>("Le compte doit être activé.");
+        }
+
+        if (!user.Active)
+        {
+            _logger.LogWarning("Login failed: account disabled for {UserId}", user.Id);
+            return Result.Failure<SimplyAuthResponse>("Account has been disabled. Please contact support.");
         }
 
         var result = _simplyAuthService.VerifyPassword(dto.Password, user.PasswordHash);
@@ -306,6 +316,20 @@ public class AuthentificationService : IAuthentificationService
             return Result.Failure("User not found.");
         }
 
+        // Ensure password info exists
+        await _passwordHistoryManager.EnsurePasswordsInfoExistsAsync(user.Id);
+
+        // Check if new password is one of the last 5 passwords
+        var isPasswordReused = await _passwordHistoryManager.IsPasswordReusedAsync(user.Id, dto.NewPassword);
+        if (isPasswordReused)
+        {
+            _logger.LogWarning("Password reset failed: user {UserId} attempted to reuse a recent password", user.Id);
+            return Result.Failure("You cannot reuse any of your last 5 passwords. Please choose a different password.");
+        }
+
+        // Add current password to history before resetting
+        await _passwordHistoryManager.AddPasswordToHistoryAsync(user.Id, user.PasswordHash);
+
         // Hash the new password
         var newHash = _simplyAuthService.HashPassword(dto.NewPassword);
 
@@ -475,6 +499,20 @@ public class AuthentificationService : IAuthentificationService
             _logger.LogWarning("Password change failed: current password incorrect for user {UserId}", userId);
             return Result.Failure("Current password is incorrect.");
         }
+
+        // Ensure password info exists
+        await _passwordHistoryManager.EnsurePasswordsInfoExistsAsync(userId);
+
+        // Check if new password is one of the last 5 passwords
+        var isPasswordReused = await _passwordHistoryManager.IsPasswordReusedAsync(userId, dto.NewPassword);
+        if (isPasswordReused)
+        {
+            _logger.LogWarning("Password change failed: user {UserId} attempted to reuse a recent password", userId);
+            return Result.Failure("You cannot reuse any of your last 5 passwords. Please choose a different password.");
+        }
+
+        // Add current password to history before changing
+        await _passwordHistoryManager.AddPasswordToHistoryAsync(userId, user.PasswordHash);
 
         // Hash the new password
         var newHash = _simplyAuthService.HashPassword(dto.NewPassword);
