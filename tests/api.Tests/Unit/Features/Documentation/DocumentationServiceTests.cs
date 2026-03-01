@@ -17,7 +17,7 @@ public class DocumentationServiceTests
         _mockEnvironment = new Mock<IWebHostEnvironment>();
         _testDocRoot = Path.Combine(Path.GetTempPath(), "CesiZenDocsTest", Guid.NewGuid().ToString());
         Directory.CreateDirectory(_testDocRoot);
-        _mockEnvironment.Setup(e => e.ContentRootPath).Returns(Path.GetDirectoryName(_testDocRoot)!);
+        _mockEnvironment.Setup(e => e.ContentRootPath).Returns(_testDocRoot);
 
         _service = new DocumentationService(_mockEnvironment.Object);
     }

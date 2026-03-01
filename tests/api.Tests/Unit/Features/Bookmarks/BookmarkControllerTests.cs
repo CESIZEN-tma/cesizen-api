@@ -127,9 +127,9 @@ public class BookmarkControllerTests
         var result = await _controller.CreateBookmark(createDto);
 
         // Assert
-        result.Should().BeOfType<CreatedResult>();
-        var createdResult = result as CreatedResult;
-        createdResult!.Location.Should().Be($"/api/bookmarks/{configurationId}");
+        result.Should().BeOfType<CreatedAtActionResult>();
+        var createdResult = result as CreatedAtActionResult;
+        createdResult!.ActionName.Should().Be(nameof(BookmarkController.GetUserBookmarks));
         createdResult.Value.Should().BeEquivalentTo(createdBookmark);
 
         _mockService.Verify(s => s.CreateBookmarkAsync(_testUserId, createDto), Times.Once);

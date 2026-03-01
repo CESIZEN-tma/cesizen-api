@@ -22,7 +22,7 @@ public class DocumentationIntegrationTests : IDisposable
 
         // Setup mock environment
         _mockEnvironment = new Mock<IWebHostEnvironment>();
-        _mockEnvironment.Setup(e => e.ContentRootPath).Returns(Path.GetDirectoryName(_testDocRoot)!);
+        _mockEnvironment.Setup(e => e.ContentRootPath).Returns(_testDocRoot);
 
         // Create service and controller
         _service = new DocumentationService(_mockEnvironment.Object);

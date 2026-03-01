@@ -35,10 +35,10 @@ public class AdminSessionServiceTests
         var expectedSession = TestDataBuilder.AdminSessions.BuildValid(adminId);
         expectedSession.Token = refreshToken;
 
-        _mockRepository.Setup(r => r.FirstOrDefaultAsync(
+        _mockRepository.Setup(r => r.ListAsync(
                 It.IsAny<Expression<Func<AdminSession, bool>>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedSession);
+            .ReturnsAsync(new List<AdminSession> { expectedSession });
 
         // Act
         var result = await _sut.GetByRefreshToken(refreshToken);
@@ -55,10 +55,10 @@ public class AdminSessionServiceTests
         // Arrange
         var refreshToken = "expired-token";
 
-        _mockRepository.Setup(r => r.FirstOrDefaultAsync(
+        _mockRepository.Setup(r => r.ListAsync(
                 It.IsAny<Expression<Func<AdminSession, bool>>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((AdminSession?)null);
+            .ReturnsAsync(new List<AdminSession>());
 
         // Act
         var result = await _sut.GetByRefreshToken(refreshToken);
@@ -73,10 +73,10 @@ public class AdminSessionServiceTests
         // Arrange
         var refreshToken = "consumed-token";
 
-        _mockRepository.Setup(r => r.FirstOrDefaultAsync(
+        _mockRepository.Setup(r => r.ListAsync(
                 It.IsAny<Expression<Func<AdminSession, bool>>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((AdminSession?)null);
+            .ReturnsAsync(new List<AdminSession>());
 
         // Act
         var result = await _sut.GetByRefreshToken(refreshToken);
