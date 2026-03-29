@@ -15,6 +15,11 @@ public abstract class BaseSessionService<TSession, TRepository, TFactory> : IBas
     protected readonly TRepository Repository;
     protected readonly TFactory Factory;
     protected readonly ILogger Logger;
+    protected readonly Expression<Func<TSession, Guid>> GetSessionIdExpr;
+    protected readonly Expression<Func<TSession, Guid>> GetEntityIdExpr;
+    protected readonly Expression<Func<TSession, string>> GetTokenExpr;
+    protected readonly Expression<Func<TSession, bool>> GetConsumedExpr;
+    protected readonly Expression<Func<TSession, DateTime>> GetExpiresAtExpr;
     protected readonly Func<TSession, Guid> GetSessionId;
     protected readonly Func<TSession, Guid> GetEntityId;
     protected readonly Func<TSession, string> GetToken;
@@ -28,11 +33,11 @@ public abstract class BaseSessionService<TSession, TRepository, TFactory> : IBas
         TRepository repository,
         TFactory factory,
         ILogger logger,
-        Func<TSession, Guid> getSessionId,
-        Func<TSession, Guid> getEntityId,
-        Func<TSession, string> getToken,
-        Func<TSession, bool> getConsumed,
-        Func<TSession, DateTime> getExpiresAt,
+        Expression<Func<TSession, Guid>> getSessionId,
+        Expression<Func<TSession, Guid>> getEntityId,
+        Expression<Func<TSession, string>> getToken,
+        Expression<Func<TSession, bool>> getConsumed,
+        Expression<Func<TSession, DateTime>> getExpiresAt,
         Action<TSession, bool> setConsumed,
         Action<TSession, DateTime> setUpdateTime,
         Func<Guid, string, DateTime, TSession> createSessionFunc)
@@ -40,11 +45,16 @@ public abstract class BaseSessionService<TSession, TRepository, TFactory> : IBas
         Repository = repository;
         Factory = factory;
         Logger = logger;
-        GetSessionId = getSessionId;
-        GetEntityId = getEntityId;
-        GetToken = getToken;
-        GetConsumed = getConsumed;
-        GetExpiresAt = getExpiresAt;
+        GetSessionIdExpr = getSessionId;
+        GetEntityIdExpr = getEntityId;
+        GetTokenExpr = getToken;
+        GetConsumedExpr = getConsumed;
+        GetExpiresAtExpr = getExpiresAt;
+        GetSessionId = getSessionId.Compile();
+        GetEntityId = getEntityId.Compile();
+        GetToken = getToken.Compile();
+        GetConsumed = getConsumed.Compile();
+        GetExpiresAt = getExpiresAt.Compile();
         SetConsumed = setConsumed;
         SetUpdateTime = setUpdateTime;
         CreateSessionFunc = createSessionFunc;
@@ -52,10 +62,28 @@ public abstract class BaseSessionService<TSession, TRepository, TFactory> : IBas
 
     public async Task<TSession?> GetByRefreshToken(string refreshToken)
     {
-        var sessions = await Repository.ListAsync(s =>
-            GetToken(s) == refreshToken &&
-            !GetConsumed(s) &&
-            GetExpiresAt(s) > DateTime.UtcNow);
+        var tokenParam = GetTokenExpr.Parameters[0];
+        var consumedParam = GetConsumedExpr.Parameters[0];
+        var expiresParam = GetExpiresAtExpr.Parameters[0];
+
+        var parameter = Expression.Parameter(typeof(TSession), "s");
+
+        var tokenBody = Expression.Invoke(GetTokenExpr, parameter);
+        var tokenCondition = Expression.Equal(tokenBody, Expression.Constant(refreshToken));
+
+        var consumedBody = Expression.Invoke(GetConsumedExpr, parameter);
+        var consumedCondition = Expression.Not(consumedBody);
+
+        var expiresBody = Expression.Invoke(GetExpiresAtExpr, parameter);
+        var expiresCondition = Expression.GreaterThan(expiresBody, Expression.Constant(DateTime.UtcNow));
+
+        var combinedCondition = Expression.AndAlso(
+            Expression.AndAlso(tokenCondition, consumedCondition),
+            expiresCondition);
+
+        var lambda = Expression.Lambda<Func<TSession, bool>>(combinedCondition, parameter);
+
+        var sessions = await Repository.ListAsync(lambda);
 
         return sessions.FirstOrDefault();
     }
@@ -73,7 +101,12 @@ public abstract class BaseSessionService<TSession, TRepository, TFactory> : IBas
 
     public async Task<bool> ConsumeSession(string refreshToken)
     {
-        var session = await Repository.FirstOrDefaultAsync(s => GetToken(s) == refreshToken);
+        var parameter = Expression.Parameter(typeof(TSession), "s");
+        var tokenBody = Expression.Invoke(GetTokenExpr, parameter);
+        var condition = Expression.Equal(tokenBody, Expression.Constant(refreshToken));
+        var lambda = Expression.Lambda<Func<TSession, bool>>(condition, parameter);
+
+        var session = await Repository.FirstOrDefaultAsync(lambda);
 
         if (session == null)
         {
@@ -105,10 +138,24 @@ public abstract class BaseSessionService<TSession, TRepository, TFactory> : IBas
 
     public async Task<bool> RevokeAllEntitySessions(Guid entityId)
     {
-        var sessions = await Repository.ListAsync(s =>
-            GetEntityId(s) == entityId &&
-            !GetConsumed(s) &&
-            GetExpiresAt(s) > DateTime.UtcNow);
+        var parameter = Expression.Parameter(typeof(TSession), "s");
+
+        var entityBody = Expression.Invoke(GetEntityIdExpr, parameter);
+        var entityCondition = Expression.Equal(entityBody, Expression.Constant(entityId));
+
+        var consumedBody = Expression.Invoke(GetConsumedExpr, parameter);
+        var consumedCondition = Expression.Not(consumedBody);
+
+        var expiresBody = Expression.Invoke(GetExpiresAtExpr, parameter);
+        var expiresCondition = Expression.GreaterThan(expiresBody, Expression.Constant(DateTime.UtcNow));
+
+        var combinedCondition = Expression.AndAlso(
+            Expression.AndAlso(entityCondition, consumedCondition),
+            expiresCondition);
+
+        var lambda = Expression.Lambda<Func<TSession, bool>>(combinedCondition, parameter);
+
+        var sessions = await Repository.ListAsync(lambda);
 
         if (!sessions.Any())
         {
@@ -157,9 +204,19 @@ public abstract class BaseSessionService<TSession, TRepository, TFactory> : IBas
 
     public async Task CleanupExpiredSessions()
     {
-        var expiredSessions = await Repository.ListAsync(s =>
-            GetExpiresAt(s) < DateTime.UtcNow &&
-            !GetConsumed(s));
+        var parameter = Expression.Parameter(typeof(TSession), "s");
+
+        var expiresBody = Expression.Invoke(GetExpiresAtExpr, parameter);
+        var expiresCondition = Expression.LessThan(expiresBody, Expression.Constant(DateTime.UtcNow));
+
+        var consumedBody = Expression.Invoke(GetConsumedExpr, parameter);
+        var consumedCondition = Expression.Not(consumedBody);
+
+        var combinedCondition = Expression.AndAlso(expiresCondition, consumedCondition);
+
+        var lambda = Expression.Lambda<Func<TSession, bool>>(combinedCondition, parameter);
+
+        var expiredSessions = await Repository.ListAsync(lambda);
 
         if (!expiredSessions.Any())
         {
@@ -179,10 +236,24 @@ public abstract class BaseSessionService<TSession, TRepository, TFactory> : IBas
 
     public async Task<List<TSession>> GetActiveSessionsByEntityId(Guid entityId)
     {
-        var sessions = await Repository.ListAsync(s =>
-            GetEntityId(s) == entityId &&
-            !GetConsumed(s) &&
-            GetExpiresAt(s) > DateTime.UtcNow);
+        var parameter = Expression.Parameter(typeof(TSession), "s");
+
+        var entityBody = Expression.Invoke(GetEntityIdExpr, parameter);
+        var entityCondition = Expression.Equal(entityBody, Expression.Constant(entityId));
+
+        var consumedBody = Expression.Invoke(GetConsumedExpr, parameter);
+        var consumedCondition = Expression.Not(consumedBody);
+
+        var expiresBody = Expression.Invoke(GetExpiresAtExpr, parameter);
+        var expiresCondition = Expression.GreaterThan(expiresBody, Expression.Constant(DateTime.UtcNow));
+
+        var combinedCondition = Expression.AndAlso(
+            Expression.AndAlso(entityCondition, consumedCondition),
+            expiresCondition);
+
+        var lambda = Expression.Lambda<Func<TSession, bool>>(combinedCondition, parameter);
+
+        var sessions = await Repository.ListAsync(lambda);
 
         Logger.LogInformation("Retrieved {Count} active sessions for entity {EntityId}", sessions.Count(), entityId);
 
@@ -191,8 +262,12 @@ public abstract class BaseSessionService<TSession, TRepository, TFactory> : IBas
 
     public async Task<bool> RevokeSessionForEntity(Guid sessionId, Guid entityId)
     {
-        var sessions = await Repository.ListAsync(s =>
-            GetEntityId(s) == entityId);
+        var parameter = Expression.Parameter(typeof(TSession), "s");
+        var entityBody = Expression.Invoke(GetEntityIdExpr, parameter);
+        var entityCondition = Expression.Equal(entityBody, Expression.Constant(entityId));
+        var lambda = Expression.Lambda<Func<TSession, bool>>(entityCondition, parameter);
+
+        var sessions = await Repository.ListAsync(lambda);
 
         var session = sessions.FirstOrDefault(s => GetSessionId(s) == sessionId);
 
@@ -220,10 +295,24 @@ public abstract class BaseSessionService<TSession, TRepository, TFactory> : IBas
 
     public async Task<bool> RevokeAllSessionsExceptCurrent(Guid entityId, Guid currentSessionId)
     {
-        var sessions = await Repository.ListAsync(s =>
-            GetEntityId(s) == entityId &&
-            !GetConsumed(s) &&
-            GetExpiresAt(s) > DateTime.UtcNow);
+        var parameter = Expression.Parameter(typeof(TSession), "s");
+
+        var entityBody = Expression.Invoke(GetEntityIdExpr, parameter);
+        var entityCondition = Expression.Equal(entityBody, Expression.Constant(entityId));
+
+        var consumedBody = Expression.Invoke(GetConsumedExpr, parameter);
+        var consumedCondition = Expression.Not(consumedBody);
+
+        var expiresBody = Expression.Invoke(GetExpiresAtExpr, parameter);
+        var expiresCondition = Expression.GreaterThan(expiresBody, Expression.Constant(DateTime.UtcNow));
+
+        var combinedCondition = Expression.AndAlso(
+            Expression.AndAlso(entityCondition, consumedCondition),
+            expiresCondition);
+
+        var lambda = Expression.Lambda<Func<TSession, bool>>(combinedCondition, parameter);
+
+        var sessions = await Repository.ListAsync(lambda);
 
         var sessionsToRevoke = sessions.Where(s => GetSessionId(s) != currentSessionId).ToList();
 
