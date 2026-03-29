@@ -76,6 +76,7 @@ public static class DependenciesExtensions
         builder.AddServices();
         builder.AddFactories();
         builder.AddSwagger();
+        builder.AddCorsConfiguration();
         builder.AddEfCoreConfiguration();
     }
 
@@ -269,6 +270,8 @@ public static class DependenciesExtensions
             options.SwaggerDoc("v1", new OpenApiInfo { Title = "CESIZen", Version = "v1" });
         });
     }
+    
+    
 
     private static void AddEfCoreConfiguration(this WebApplicationBuilder builder)
     {
@@ -284,26 +287,18 @@ public static class DependenciesExtensions
 
     private static void AddCorsConfiguration(this WebApplicationBuilder builder)
     {
-        var clientUrl = Environment.GetEnvironmentVariable("URL_CLIENT") ??
-                        throw new InvalidOperationException("Client app URL 'URL_CLIENT' not found.");
+        var clientUrl = Environment.GetEnvironmentVariable("URL_FRONT") ??
+                        throw new InvalidOperationException("Client app URL 'URL_FRONT' not found.");
 
         var backofficeUrl = Environment.GetEnvironmentVariable("URL_BACKOFFICE") ??
                             throw new InvalidOperationException("Backlog URL 'URL_BACKOFFICE' not found.");
 
         builder.Services.AddCors(options =>
         {
-            options.AddPolicy("AllowClientApp",
+            options.AddPolicy("AllowAll",
                 policy =>
                 {
-                    policy.WithOrigins(clientUrl)
-                        .AllowAnyOrigin()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader();
-                });
-            options.AddPolicy("AllowBackLog",
-                policy =>
-                {
-                    policy.WithOrigins(backofficeUrl)
+                    policy.WithOrigins(clientUrl, backofficeUrl)
                         .AllowCredentials()
                         .AllowAnyMethod()
                         .AllowAnyHeader();
