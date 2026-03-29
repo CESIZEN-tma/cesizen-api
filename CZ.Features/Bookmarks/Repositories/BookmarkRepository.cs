@@ -28,4 +28,11 @@ public class BookmarkRepository : BaseRepository<Bookmark>, IBookmarkRepository
             .Include(b => b.IdConfigurationsNavigation)
             .FirstOrDefaultAsync(b => b.Id == userId && b.IdConfigurations == configurationId && b.DeletionTime == null);
     }
+
+    public async Task<Bookmark?> GetUserBookmarkIncludingDeletedAsync(Guid userId, Guid configurationId)
+    {
+        return await _context.Bookmarks
+            .Include(b => b.IdConfigurationsNavigation)
+            .FirstOrDefaultAsync(b => b.Id == userId && b.IdConfigurations == configurationId);
+    }
 }

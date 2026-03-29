@@ -25,9 +25,18 @@ public class BookmarkService : IBookmarkService
 
     public async Task<GetBookmarkDto?> CreateBookmarkAsync(Guid userId, CreateBookmarkDto dto)
     {
-        var exists = await _repository.GetUserBookmarkAsync(userId, dto.ConfigurationId);
-        if (exists != null)
-            throw new InvalidOperationException("Bookmark already exists");
+        var existing = await _repository.GetUserBookmarkIncludingDeletedAsync(userId, dto.ConfigurationId);
+
+        if (existing != null)
+        {
+            if (existing.DeletionTime == null)
+                throw new InvalidOperationException("Bookmark already exists");
+
+            existing.DeletionTime = null;
+            existing.UpdateTime = DateTime.UtcNow;
+            await _repository.UpdateAsync(existing);
+            return existing.ToDto();
+        }
 
         var bookmark = _factory.Create(userId, dto.ConfigurationId);
         await _repository.AddAsync(bookmark);
