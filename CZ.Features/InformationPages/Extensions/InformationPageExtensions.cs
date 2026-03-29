@@ -19,7 +19,8 @@ public static class InformationPageExtensions
             Active = page.Active,
             CreationTime = page.CreationTime,
             UpdateTime = page.UpdateTime,
-            IdAdministrators = page.IdAdministrators
+            IdAdministrators = page.IdAdministrators,
+            TagIds = page.IdInformationTags.Select(t => t.Id).ToList()
         };
     }
 }

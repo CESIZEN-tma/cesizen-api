@@ -25,4 +25,5 @@ public class UpdateInformationPageDto
     public required string Status { get; set; }
 
     public bool Active { get; set; }
+    public List<Guid> TagIds { get; set; } = new();
 }

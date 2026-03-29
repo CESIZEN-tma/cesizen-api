@@ -23,4 +23,5 @@ public class CreateInformationPageDto
     public required string Status { get; set; }
 
     public bool Active { get; set; } = false;
+    public List<Guid> TagIds { get; set; } = new();
 }

@@ -13,4 +13,5 @@ public class GetInformationPageDto
     public DateTime CreationTime { get; set; }
     public DateTime? UpdateTime { get; set; }
     public Guid IdAdministrators { get; set; }
+    public List<Guid> TagIds { get; set; } = new();
 }
