@@ -19,6 +19,13 @@ public class QuizzRepository : BaseRepository<Quizz>, IQuizzRepository
         return await _context.Quizzs
             .Include(q => q.Questions)
                 .ThenInclude(q => q.ResponsesOptions)
-            .FirstOrDefaultAsync(q => q.Id == id && q.DeletionTime == null);
+            .FirstOrDefaultAsync(q => q.Id == id);
+    }
+
+    public async Task<IEnumerable<Quizz>> ListWithQuestionCountAsync()
+    {
+        return await _context.Quizzs
+            .Include(q => q.Questions)
+            .ToListAsync();
     }
 }

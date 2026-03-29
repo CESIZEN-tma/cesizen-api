@@ -31,7 +31,7 @@ public class QuizzService : IQuizzService
 
     public async Task<IEnumerable<GetQuizzDto>> GetAllAsync()
     {
-        var quizzes = await _quizzRepository.ListAsync(q => q.DeletionTime == null);
+        var quizzes = await _quizzRepository.ListWithQuestionCountAsync();
 
         return quizzes.Select(q => q.ToDto());
     }
@@ -120,7 +120,7 @@ public class QuizzService : IQuizzService
     {
         var quizz = await _quizzRepository.FindAsync(id);
 
-        if (quizz == null || quizz.DeletionTime != null)
+        if (quizz == null)
             return null;
 
         quizz.Nom = dto.Nom;
@@ -136,21 +136,82 @@ public class QuizzService : IQuizzService
         return quizz.ToDto();
     }
 
+    public async Task<GetQuizzDetailDto?> UpdateFullAsync(Guid id, CreateQuizzDto dto, Guid adminId)
+    {
+        var quizz = await _quizzRepository.GetWithQuestionsAsync(id);
+
+        if (quizz == null)
+            return null;
+
+        foreach (var question in quizz.Questions.ToList())
+        {
+            foreach (var option in question.ResponsesOptions.ToList())
+                await _optionRepository.DeleteAsync(option);
+
+            await _questionRepository.DeleteAsync(question);
+        }
+
+        quizz.Nom = dto.Nom;
+        quizz.Active = dto.Active;
+        quizz.UpdateTime = DateTime.UtcNow;
+        await _quizzRepository.UpdateAsync(quizz);
+
+        foreach (var questionDto in dto.Questions)
+        {
+            var question = new Question
+            {
+                Id = Guid.NewGuid(),
+                Text = questionDto.Text,
+                Position = questionDto.Position,
+                IdQuizz = quizz.Id,
+                CreationTime = DateTime.UtcNow
+            };
+
+            await _questionRepository.AddAsync(question);
+
+            foreach (var optionDto in questionDto.Options)
+            {
+                var option = new ResponsesOption
+                {
+                    Id = Guid.NewGuid(),
+                    Label = optionDto.Label,
+                    Position = optionDto.Position,
+                    TargetedField = optionDto.TargetedField,
+                    Operation = optionDto.Operation,
+                    Value = optionDto.Value,
+                    IdQuestions = question.Id,
+                    CreationTime = DateTime.UtcNow
+                };
+
+                await _optionRepository.AddAsync(option);
+            }
+        }
+
+        await _actionLogger.LogUpdateAsync(adminId, "Quiz", quizz.Id,
+            $"Updated full quiz '{quizz.Nom}' with {dto.Questions.Count} questions");
+
+        return await GetByIdAsync(quizz.Id);
+    }
+
     public async Task<bool> DeleteAsync(Guid id, Guid adminId)
     {
-        var quizz = await _quizzRepository.FindAsync(id);
+        var quizz = await _quizzRepository.GetWithQuestionsAsync(id);
 
-        if (quizz == null || quizz.DeletionTime != null)
+        if (quizz == null)
             return false;
 
         var quizzName = quizz.Nom;
 
-        quizz.DeletionTime = DateTime.UtcNow;
-        quizz.UpdateTime = DateTime.UtcNow;
+        foreach (var question in quizz.Questions.ToList())
+        {
+            foreach (var option in question.ResponsesOptions.ToList())
+                await _optionRepository.DeleteAsync(option);
 
-        await _quizzRepository.SoftDeleteAsync(quizz);
+            await _questionRepository.DeleteAsync(question);
+        }
 
-        // Log the delete action
+        await _quizzRepository.DeleteAsync(quizz);
+
         await _actionLogger.LogDeleteAsync(adminId, "Quiz", quizz.Id,
             $"Deleted quiz '{quizzName}'");
 

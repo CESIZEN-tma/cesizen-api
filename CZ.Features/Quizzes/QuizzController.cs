@@ -65,6 +65,19 @@ public class QuizzController : ControllerBase
         return Ok(quizz);
     }
 
+    [HttpPut("{id:guid}/full")]
+    [Authorize(Roles = "Administrator")]
+    public async Task<IActionResult> UpdateFull(Guid id, [FromBody] CreateQuizzDto dto)
+    {
+        var adminId = GetAdminId();
+        var quizz = await _service.UpdateFullAsync(id, dto, adminId);
+
+        if (quizz == null)
+            return NotFound(new { error = "Quiz not found" });
+
+        return Ok(quizz);
+    }
+
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> Delete(Guid id)
