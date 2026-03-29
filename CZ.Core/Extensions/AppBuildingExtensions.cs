@@ -1,5 +1,6 @@
 using api.CZ.Core.Middlewares;
 using api.CZ.Data.EFCore;
+using Microsoft.EntityFrameworkCore;
 using Simply.Auth.Core.Abstractions;
 
 namespace api.CZ.Core.Extensions;
@@ -27,6 +28,7 @@ public static class AppBuildingExtensions
         using (var scope = app.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<CesiZenDbContext>();
+            await db.Database.MigrateAsync();
             var authService = scope.ServiceProvider.GetRequiredService<ISimplyAuthService>();
             await Seeding.DatabaseSeeder.SeedAsync(db, authService);
         }
