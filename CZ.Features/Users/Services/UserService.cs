@@ -60,6 +60,23 @@ public class UserService : IUserService
         return true;
     }
 
+    public async Task<IEnumerable<GetUserAdminDto>> GetAllForAdminAsync()
+    {
+        var users = await _repository.ListAsync(u => u.DeletionTime == null);
+
+        return users.Select(u => new GetUserAdminDto
+        {
+            Id = u.Id,
+            Email = u.Email,
+            FirstName = u.FirstName,
+            LastName = u.LastName,
+            Active = u.Active,
+            AccountActivated = u.AccountActivated,
+            MemberSince = u.MemberSince,
+            LockedUntil = u.LockedUntil
+        });
+    }
+
     public async Task<bool> UpdateUserStatusAsync(Guid userId, bool active, Guid adminId)
     {
         var user = await _repository.FindAsync(userId);

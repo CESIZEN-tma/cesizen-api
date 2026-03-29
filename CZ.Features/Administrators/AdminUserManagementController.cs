@@ -38,6 +38,13 @@ public class AdminUserManagementController : ControllerBase
         return Guid.Parse(adminIdClaim!);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetAllUsers()
+    {
+        var users = await _userService.GetAllForAdminAsync();
+        return Ok(users);
+    }
+
     [HttpPatch("{userId:guid}/status")]
     public async Task<IActionResult> UpdateUserStatus(Guid userId, [FromBody] UpdateUserStatusDto dto)
     {

@@ -13,7 +13,8 @@ public class UserFactory : BaseFactory<User>, IUserFactory
             return new User
             {
                 Id = Guid.NewGuid(),
-                CreationTime = DateTime.Now
+                CreationTime = DateTime.Now,
+                Active = true
             };
         }
 
@@ -24,7 +25,8 @@ public class UserFactory : BaseFactory<User>, IUserFactory
             {
                 Id = Guid.NewGuid(),
                 Email = email,
-                CreationTime = DateTime.UtcNow
+                CreationTime = DateTime.UtcNow,
+                Active = true
             },
             
             [string email, string firstName, string lastName, string hash] => new User
@@ -34,7 +36,8 @@ public class UserFactory : BaseFactory<User>, IUserFactory
                 FirstName = firstName,
                 LastName = lastName,
                 PasswordHash = hash,
-                CreationTime = DateTime.UtcNow
+                CreationTime = DateTime.UtcNow,
+                Active = true
             },
             
             _ => throw new ArgumentException(
