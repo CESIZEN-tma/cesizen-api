@@ -47,13 +47,34 @@ public class AdminAuthentificationController : ControllerBase
         );
     }
 
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginDto dto)
+    [HttpPost("login/{client}")]
+    public async Task<IActionResult> Login([FromRoute] string client, [FromBody] LoginDto dto)
     {
         var result = await _service.Login(dto);
+        var allowedClients = new[] { "web", "mobile" };
+        //shut down the request before entering login if the client type is not good
+        if (!allowedClients.Contains(client)) throw new Exception("Invalid client type");
+        
 
         return result.Match<IActionResult>(
-            onSuccess: tokens => Ok(tokens),
+            onSuccess: tokens =>
+            {
+                if(client.ToLower() ==
+                   "web") //request from the backoffice OR the web app, return token in httpOnly cookie
+                {
+                    Response.Cookies.Append("refresh_token", tokens.RefreshToken, new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.Strict,
+                        Expires = DateTime.UtcNow.AddDays(15)
+                    });
+
+                    return Ok(new { accessToken = tokens.AccessToken });
+                }
+
+                return Ok(new { accessToken= tokens.AccessToken, refreshToken = tokens.RefreshToken}); //return the token in the body of the result, for mobile apps
+            },
             onFailure: error => Unauthorized(new { error })
         );
     }
@@ -81,23 +102,46 @@ public class AdminAuthentificationController : ControllerBase
     }
 
     [HttpPost("refresh-token")]
-    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto dto)
+    public async Task<IActionResult> RefreshToken()
     {
+        var refreshToken = Request.Cookies["refresh_token"];
+        if (string.IsNullOrEmpty(refreshToken))
+            return Unauthorized(new { error = "No refresh token provided." });
+
+        var dto = new RefreshTokenDto { RefreshToken = refreshToken };
         var result = await _service.RefreshToken(dto);
 
         return result.Match<IActionResult>(
-            onSuccess: tokens => Ok(tokens),
+            onSuccess: tokens =>
+            {
+                Response.Cookies.Append("refresh_token", tokens.RefreshToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTime.UtcNow.AddDays(15)
+                });
+                return Ok(new { accessToken = tokens.AccessToken });
+            },
             onFailure: error => Unauthorized(new { error })
         );
     }
 
     [HttpPost("logout")]
-    public async Task<IActionResult> Logout([FromBody] RefreshTokenDto dto)
+    public async Task<IActionResult> Logout()
     {
-        var result = await _service.Logout(dto.RefreshToken);
+        var refreshToken = Request.Cookies["refresh_token"];
+        if (string.IsNullOrEmpty(refreshToken))
+            return BadRequest(new { error = "No refresh token provided." });
+
+        var result = await _service.Logout(refreshToken);
 
         return result.Match<IActionResult>(
-            onSuccess: () => Ok(new { message = "Logged out successfully." }),
+            onSuccess: () =>
+            {
+                Response.Cookies.Delete("refresh_token");
+                return Ok(new { message = "Logged out successfully." });
+            },
             onFailure: error => BadRequest(new { error })
         );
     }

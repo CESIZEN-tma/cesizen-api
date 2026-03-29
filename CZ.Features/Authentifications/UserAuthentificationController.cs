@@ -47,13 +47,34 @@ public class UserAuthentificationController : ControllerBase
         );
     }
 
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginDto dto)
+    [HttpPost("login/{client}")]
+    public async Task<IActionResult> Login([FromRoute] string client, [FromBody] LoginDto dto)
     {
+        var allowedClients = new[] { "web", "mobile" };
+        //shut down the request before entering login if the client type is not good
+        if (!allowedClients.Contains(client)) throw new Exception("Invalid client type");
+        
         var result = await _service.Login(dto);
 
         return result.Match<IActionResult>(
-            onSuccess: tokens => Ok(tokens),
+            onSuccess: tokens =>
+            {
+                if(client.ToLower() ==
+                   "web") //request from the backoffice OR the web app, return token in httpOnly cookie
+                {
+                    Response.Cookies.Append("refresh_token", tokens.RefreshToken, new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.Strict,
+                        Expires = DateTime.UtcNow.AddDays(15)
+                    });
+
+                    return Ok(new { accessToken = tokens.AccessToken });
+                }
+
+                return Ok(new { accessToken= tokens.AccessToken, refreshToken = tokens.RefreshToken}); //return the token in the body of the result, for mobile apps
+            },
             onFailure: error => Unauthorized(new { error })
         );
     }
