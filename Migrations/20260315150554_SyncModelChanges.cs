@@ -11,41 +11,43 @@ namespace api.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_password_reset_tokens_passwords_infos_PasswordsInfoId",
-                table: "password_reset_tokens");
+            // These objects may not exist if the schema was bootstrapped from init.sql
+            // which already had the refactored FK naming. Safe to skip if absent.
+            migrationBuilder.Sql(@"
+                DO $$ BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM information_schema.table_constraints
+                        WHERE constraint_name = 'FK_password_reset_tokens_passwords_infos_PasswordsInfoId'
+                        AND table_name = 'password_reset_tokens'
+                    ) THEN
+                        ALTER TABLE password_reset_tokens DROP CONSTRAINT ""FK_password_reset_tokens_passwords_infos_PasswordsInfoId"";
+                    END IF;
+                END $$;");
 
-            migrationBuilder.DropIndex(
-                name: "IX_password_reset_tokens_PasswordsInfoId",
-                table: "password_reset_tokens");
+            migrationBuilder.Sql(@"DROP INDEX IF EXISTS ""IX_password_reset_tokens_PasswordsInfoId"";");
 
-            migrationBuilder.DropColumn(
-                name: "PasswordsInfoId",
-                table: "password_reset_tokens");
+            migrationBuilder.Sql(@"
+                ALTER TABLE password_reset_tokens DROP COLUMN IF EXISTS ""PasswordsInfoId"";");
 
-            migrationBuilder.AddColumn<Guid>(
-                name: "IdPasswordsInfos",
-                table: "users",
-                type: "uuid",
-                nullable: true);
+            migrationBuilder.Sql(@"
+                ALTER TABLE users ADD COLUMN IF NOT EXISTS ""IdPasswordsInfos"" uuid;
+                ALTER TABLE users ADD COLUMN IF NOT EXISTS ""IdPasswordsInfosNavigationId"" uuid;");
 
-            migrationBuilder.AddColumn<Guid>(
-                name: "IdPasswordsInfosNavigationId",
-                table: "users",
-                type: "uuid",
-                nullable: true);
+            migrationBuilder.Sql(@"
+                CREATE INDEX IF NOT EXISTS ""IX_users_IdPasswordsInfosNavigationId""
+                ON users (""IdPasswordsInfosNavigationId"");");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_users_IdPasswordsInfosNavigationId",
-                table: "users",
-                column: "IdPasswordsInfosNavigationId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_users_passwords_infos_IdPasswordsInfosNavigationId",
-                table: "users",
-                column: "IdPasswordsInfosNavigationId",
-                principalTable: "passwords_infos",
-                principalColumn: "id");
+            migrationBuilder.Sql(@"
+                DO $$ BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.table_constraints
+                        WHERE constraint_name = 'FK_users_passwords_infos_IdPasswordsInfosNavigationId'
+                        AND table_name = 'users'
+                    ) THEN
+                        ALTER TABLE users ADD CONSTRAINT ""FK_users_passwords_infos_IdPasswordsInfosNavigationId""
+                        FOREIGN KEY (""IdPasswordsInfosNavigationId"") REFERENCES passwords_infos (id);
+                    END IF;
+                END $$;");
         }
 
         /// <inheritdoc />
