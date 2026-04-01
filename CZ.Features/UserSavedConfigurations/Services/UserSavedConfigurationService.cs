@@ -25,9 +25,9 @@ public class UserSavedConfigurationService : IUserSavedConfigurationService
         _responsesOptionRepository = responsesOptionRepository;
     }
 
-    public async Task<IEnumerable<GetUserSavedConfigurationDto>> GetAllAsync()
+    public async Task<IEnumerable<GetUserSavedConfigurationDto>> GetByUserAsync(Guid userId)
     {
-        var configurations = await _repository.ListAsync(c => c.DeletionTime == null);
+        var configurations = await _repository.GetByUserIdAsync(userId);
 
         return configurations.Select(c => c.ToDto());
     }
@@ -42,11 +42,12 @@ public class UserSavedConfigurationService : IUserSavedConfigurationService
         return configuration.ToDto();
     }
 
-    public async Task<GetUserSavedConfigurationDto?> CreateAsync(CreateUserSavedConfigurationDto dto)
+    public async Task<GetUserSavedConfigurationDto?> CreateAsync(CreateUserSavedConfigurationDto dto, Guid userId)
     {
         var configuration = new UserSavedConfiguration
         {
             Id = Guid.NewGuid(),
+            IdUser = userId,
             Name = dto.Name,
             Inhalation = dto.Inhalation,
             Retention1 = dto.Retention1,
@@ -196,6 +197,7 @@ public class UserSavedConfigurationService : IUserSavedConfigurationService
         var userSavedConfiguration = new UserSavedConfiguration
         {
             Id = Guid.NewGuid(),
+            IdUser = userId,
             Name = $"Generated from {quiz.Nom} - {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}",
             Inhalation = inhalation,
             Retention1 = retention1,

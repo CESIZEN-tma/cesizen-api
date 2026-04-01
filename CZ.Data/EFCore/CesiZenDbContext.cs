@@ -598,7 +598,7 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.ThumbnailUrl).HasColumnName("thumbnail_url");
             entity.Property(e => e.UpdateTime).HasColumnName("update_time");
 
-            entity.HasOne(d => d.IdUserSavedConfigurationsNavigation).WithMany(p => p.Users)
+            entity.HasOne(d => d.IdUserSavedConfigurationsNavigation).WithMany()
                 .HasForeignKey(d => d.IdUserSavedConfigurations)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("users_id_user_saved_configurations_fk");
@@ -613,6 +613,7 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.Id)
                 .ValueGeneratedNever()
                 .HasColumnName("id");
+            entity.Property(e => e.IdUser).HasColumnName("id_user");
             entity.Property(e => e.CreationTime).HasColumnName("creation_time");
             entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
             entity.Property(e => e.Difficulty).HasColumnName("difficulty");
@@ -631,6 +632,11 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.Retention1).HasColumnName("retention1");
             entity.Property(e => e.Retention2).HasColumnName("retention2");
             entity.Property(e => e.UpdateTime).HasColumnName("update_time");
+
+            entity.HasOne(d => d.IdUserNavigation).WithMany()
+                .HasForeignKey(d => d.IdUser)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("user_saved_configurations_id_user_fk");
         });
 
         OnModelCreatingPartial(modelBuilder);

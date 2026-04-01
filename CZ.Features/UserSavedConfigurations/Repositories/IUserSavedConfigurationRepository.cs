@@ -5,4 +5,5 @@ namespace api.CZ.Features.UserSavedConfigurations.Repositories;
 
 public interface IUserSavedConfigurationRepository : IBaseRepository<UserSavedConfiguration>
 {
+    Task<List<UserSavedConfiguration>> GetByUserIdAsync(Guid userId);
 }

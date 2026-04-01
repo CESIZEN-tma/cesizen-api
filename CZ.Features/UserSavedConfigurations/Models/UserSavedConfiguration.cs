@@ -5,6 +5,7 @@ namespace api.CZ.Features.UserSavedConfigurations.Models;
 public partial class UserSavedConfiguration
 {
     public Guid Id { get; set; }
+    public Guid IdUser { get; set; }
     public string Name { get; set; } = null!;
     public int Inhalation { get; set; }
     public int Retention1 { get; set; }
@@ -18,5 +19,5 @@ public partial class UserSavedConfiguration
     public DateTime? UpdateTime { get; set; }
     public DateTime? DeletionTime { get; set; }
 
-    public virtual ICollection<User> Users { get; set; } = new List<User>();
+    public virtual User IdUserNavigation { get; set; } = null!;
 }

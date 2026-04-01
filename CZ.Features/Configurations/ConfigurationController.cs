@@ -8,7 +8,7 @@ namespace api.CZ.Features.Configurations;
 
 [ApiController]
 [Route("api/configurations")]
-[Authorize(Roles = "Administrator")]
+[Authorize]
 public class ConfigurationController : ControllerBase
 {
     private readonly IConfigurationService _service;
@@ -45,6 +45,7 @@ public class ConfigurationController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> Create([FromBody] CreateConfigurationDto dto)
     {
         var adminId = GetAdminId();
@@ -57,6 +58,7 @@ public class ConfigurationController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateConfigurationDto dto)
     {
         var adminId = GetAdminId();
@@ -69,6 +71,7 @@ public class ConfigurationController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var adminId = GetAdminId();

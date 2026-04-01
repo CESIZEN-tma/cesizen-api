@@ -29,7 +29,8 @@ public class UserSavedConfigurationController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
-        var configurations = await _service.GetAllAsync();
+        var userId = GetUserId();
+        var configurations = await _service.GetByUserAsync(userId);
         return Ok(configurations);
     }
 
@@ -47,7 +48,8 @@ public class UserSavedConfigurationController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateUserSavedConfigurationDto dto)
     {
-        var configuration = await _service.CreateAsync(dto);
+        var userId = GetUserId();
+        var configuration = await _service.CreateAsync(dto, userId);
 
         if (configuration == null)
             return BadRequest(new { error = "Failed to create user saved configuration" });
