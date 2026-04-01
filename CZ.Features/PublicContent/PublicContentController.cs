@@ -34,7 +34,7 @@ public class PublicContentController : ControllerBase
     {
         var pages = await _pageService.GetAllAsync();
         // Filter to only active/published pages
-        var activePages = pages.Where(p => p.Active && p.Status == "Published");
+        var activePages = pages.Where(p => p.Active && p.Status.Equals("published", StringComparison.OrdinalIgnoreCase));
         return Ok(activePages);
     }
 
@@ -43,7 +43,7 @@ public class PublicContentController : ControllerBase
     {
         var page = await _pageService.GetByIdAsync(id);
 
-        if (page == null || !page.Active || page.Status != "Published")
+        if (page == null || !page.Active || page.Status.ToLower() != "published")
             return NotFound(new { error = "Information page not found or not published" });
 
         return Ok(page);
@@ -73,7 +73,34 @@ public class PublicContentController : ControllerBase
     public async Task<IActionResult> GetAllMenus()
     {
         var menus = await _menuService.GetAllAsync();
-        return Ok(menus);
+        var pages = await _pageService.GetAllAsync();
+        var publishedPageIds = pages
+            .Where(p => p.Active && p.Status.Equals("published", StringComparison.OrdinalIgnoreCase))
+            .Select(p => p.Id)
+            .ToHashSet();
+
+        const string scheme = "cesizen://info-page/";
+
+        // Filter out sub-menus whose linked page is not published/active
+        var filtered = menus.Select(root =>
+        {
+            var validChildren = root.Children
+                .Where(child =>
+                {
+                    if (child.Url == null || !child.Url.StartsWith(scheme))
+                        return true; // no page link — keep
+                    if (Guid.TryParse(child.Url[scheme.Length..], out var pageId))
+                        return publishedPageIds.Contains(pageId);
+                    return false;
+                })
+                .ToList();
+
+            root.Children.Clear();
+            foreach (var c in validChildren) root.Children.Add(c);
+            return root;
+        }).ToList();
+
+        return Ok(filtered);
     }
 
     [HttpGet("menus/{id:guid}")]

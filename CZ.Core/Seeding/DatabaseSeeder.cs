@@ -1,4 +1,4 @@
-﻿using api.CZ.Features.Administrators.Models;
+using api.CZ.Features.Administrators.Models;
 using api.CZ.Features.Users.Models;
 using api.CZ.Data.EFCore;
 using Microsoft.EntityFrameworkCore;
@@ -10,22 +10,18 @@ public static class DatabaseSeeder
 {
     public static async Task SeedAsync(CesiZenDbContext context, ISimplyAuthService authService)
     {
-        await SeedAdministratorAsync(context, authService);
-        await SeedUserAsync(context, authService);
+        await SeedAdministratorsAsync(context, authService);
+        await SeedUsersAsync(context, authService);
     }
 
-    private static async Task SeedAdministratorAsync(CesiZenDbContext context, ISimplyAuthService authService)
+    private static async Task SeedAdministratorsAsync(CesiZenDbContext context, ISimplyAuthService authService)
     {
         const string adminEmail = "admin@cesizen.fr";
+        if (await context.Administrators.AnyAsync(a => a.Email == adminEmail && a.DeletionTime == null)) return;
 
-        bool exists = await context.Administrators
-            .AnyAsync(a => a.Email == adminEmail && a.DeletionTime == null);
-
-        if (exists) return;
-
-        var admin = new Administrator
+        context.Administrators.Add(new Administrator
         {
-            Id = Guid.NewGuid(),
+            Id = Guid.Parse("11111111-0000-0000-0000-000000000001"),
             Email = adminEmail,
             PasswordHash = authService.HashPassword("Admin1234!"),
             FirstName = "Admin",
@@ -34,36 +30,36 @@ public static class DatabaseSeeder
             AccountActivated = true,
             FailedLoginAttempts = 0,
             CreationTime = DateTime.UtcNow,
-        };
-
-        context.Administrators.Add(admin);
+        });
         await context.SaveChangesAsync();
     }
 
-    private static async Task SeedUserAsync(CesiZenDbContext context, ISimplyAuthService authService)
+    private static async Task SeedUsersAsync(CesiZenDbContext context, ISimplyAuthService authService)
     {
-        const string userEmail = "user@cesizen.fr";
-
-        bool exists = await context.Users
-            .AnyAsync(u => u.Email == userEmail && u.DeletionTime == null);
-
-        if (exists) return;
-
-        var user = new User
+        var users = new[]
         {
-            Id = Guid.NewGuid(),
-            Email = userEmail,
-            PasswordHash = authService.HashPassword("User1234!"),
-            FirstName = "User",
-            LastName = "CesiZen",
-            MemberSince = DateTime.UtcNow,
-            AccountActivated = true,
-            Active = true,
-            FailedLoginAttempts = 0,
-            CreationTime = DateTime.UtcNow,
+            ("user@cesizen.fr",  "User1234!", "Marie",   "Dupont"),
+            ("demo@cesizen.fr",  "Demo1234!", "Thomas",  "Martin"),
+            ("test@cesizen.fr",  "Test1234!", "Léa",     "Bernard"),
         };
 
-        context.Users.Add(user);
+        foreach (var (email, pwd, first, last) in users)
+        {
+            if (await context.Users.AnyAsync(u => u.Email == email && u.DeletionTime == null)) continue;
+            context.Users.Add(new User
+            {
+                Id = Guid.NewGuid(),
+                Email = email,
+                PasswordHash = authService.HashPassword(pwd),
+                FirstName = first,
+                LastName = last,
+                MemberSince = DateTime.UtcNow,
+                AccountActivated = true,
+                Active = true,
+                FailedLoginAttempts = 0,
+                CreationTime = DateTime.UtcNow,
+            });
+        }
         await context.SaveChangesAsync();
     }
 }

@@ -79,4 +79,12 @@ public class NavigationMenuController : ControllerBase
 
         return Ok(new { message = "Navigation menu deleted successfully" });
     }
+
+    [HttpPut("positions")]
+    public async Task<IActionResult> UpdatePositions([FromBody] List<UpdateMenuPositionDto> positions)
+    {
+        var adminId = GetAdminId();
+        await _service.UpdatePositionsAsync(positions, adminId);
+        return Ok(new { message = "Positions updated successfully" });
+    }
 }

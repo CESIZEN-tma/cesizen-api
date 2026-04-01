@@ -10,6 +10,7 @@ public static class NavigationMenuExtensions
         return new GetNavigationMenuDto
         {
             Id = menu.Id,
+            ParentId = menu.ParentId,
             Position = menu.Position,
             Label = menu.Label,
             Url = menu.Url,

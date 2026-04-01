@@ -217,4 +217,18 @@ public class QuizzService : IQuizzService
 
         return true;
     }
+
+    public async Task<bool> SetActiveAsync(Guid id, bool active, Guid adminId)
+    {
+        var quizz = await _quizzRepository.FindAsync(id);
+        if (quizz == null) return false;
+
+        quizz.Active = active;
+        await _quizzRepository.UpdateAsync(quizz);
+
+        await _actionLogger.LogUpdateAsync(adminId, "Quiz", quizz.Id,
+            $"{(active ? "Activated" : "Deactivated")} quiz '{quizz.Nom}'");
+
+        return true;
+    }
 }

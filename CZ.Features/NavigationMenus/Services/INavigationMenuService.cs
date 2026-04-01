@@ -9,4 +9,5 @@ public interface INavigationMenuService
     Task<GetNavigationMenuDto?> CreateAsync(CreateNavigationMenuDto dto, Guid adminId);
     Task<GetNavigationMenuDto?> UpdateAsync(Guid id, UpdateNavigationMenuDto dto, Guid adminId);
     Task<bool> DeleteAsync(Guid id, Guid adminId);
+    Task UpdatePositionsAsync(List<UpdateMenuPositionDto> positions, Guid adminId);
 }

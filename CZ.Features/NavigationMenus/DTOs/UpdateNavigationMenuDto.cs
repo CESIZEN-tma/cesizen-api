@@ -4,6 +4,8 @@ namespace api.CZ.Features.NavigationMenus.DTOs;
 
 public class UpdateNavigationMenuDto
 {
+    public Guid? ParentId { get; set; }
+
     [Required]
     [Range(0, 100)]
     public int Position { get; set; }
@@ -12,9 +14,7 @@ public class UpdateNavigationMenuDto
     [StringLength(100)]
     public required string Label { get; set; }
 
-    [Required]
-    [Url]
-    public required string Url { get; set; }
+    public string? Url { get; set; }
 
     public bool CurrentlyEditing { get; set; }
 }

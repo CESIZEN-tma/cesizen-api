@@ -90,4 +90,17 @@ public class QuizzController : ControllerBase
 
         return Ok(new { message = "Quiz deleted successfully" });
     }
+
+    [HttpPatch("{id:guid}/active")]
+    [Authorize(Roles = "Administrator")]
+    public async Task<IActionResult> SetActive(Guid id, [FromBody] SetQuizzActiveDto dto)
+    {
+        var adminId = GetAdminId();
+        var result = await _service.SetActiveAsync(id, dto.Active, adminId);
+
+        if (!result)
+            return NotFound(new { error = "Quiz not found" });
+
+        return Ok(new { message = $"Quiz {(dto.Active ? "activated" : "deactivated")} successfully" });
+    }
 }

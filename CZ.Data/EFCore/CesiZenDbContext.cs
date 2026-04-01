@@ -387,6 +387,7 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.Id)
                 .ValueGeneratedNever()
                 .HasColumnName("id");
+            entity.Property(e => e.ParentId).HasColumnName("parent_id");
             entity.Property(e => e.CreationTime).HasColumnName("creation_time");
             entity.Property(e => e.CurrentlyEditing).HasColumnName("currently_editing");
             entity.Property(e => e.DeletionTime).HasColumnName("deletion_time");
@@ -396,6 +397,11 @@ public partial class CesiZenDbContext : DbContext
             entity.Property(e => e.Position).HasColumnName("position");
             entity.Property(e => e.UpdateTime).HasColumnName("update_time");
             entity.Property(e => e.Url).HasColumnName("url");
+
+            entity.HasOne(e => e.Parent)
+                .WithMany(e => e.Children)
+                .HasForeignKey(e => e.ParentId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<PasswordHistory>(entity =>

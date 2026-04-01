@@ -14,7 +14,7 @@ public class DocumentationController : ControllerBase
         _documentationService = documentationService;
     }
 
-    [HttpGet("{*path}")]
+    [HttpGet("{path}")]
     public async Task<IActionResult> GetDocumentation(string? path = null)
     {
         // Default to root README if no path provided
