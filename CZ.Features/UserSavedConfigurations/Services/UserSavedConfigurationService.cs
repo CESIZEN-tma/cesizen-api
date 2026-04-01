@@ -189,7 +189,7 @@ public class UserSavedConfigurationService : IUserSavedConfigurationService
                     guidanceType = ApplyStringOperation(guidanceType, operation, value);
                     break;
                 default:
-                    throw new InvalidOperationException($"Unknown targeted field: {option.TargetedField}");
+                    break;
             }
         }
 
