@@ -27,6 +27,7 @@ public class ConfigurationController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll()
     {
         var configurations = await _service.GetAllAsync();
@@ -34,6 +35,7 @@ public class ConfigurationController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetById(Guid id)
     {
         var configuration = await _service.GetByIdAsync(id);
