@@ -11,6 +11,9 @@ namespace api.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // Remove orphaned rows that have no valid user owner before adding the FK
+            migrationBuilder.Sql("DELETE FROM user_saved_configurations;");
+
             migrationBuilder.AddColumn<Guid>(
                 name: "id_user",
                 table: "user_saved_configurations",
