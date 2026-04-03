@@ -11,31 +11,23 @@ public class EmailService : IEmailService
     public EmailService(IEmailSender emailSender)
     {
         _emailSender = emailSender;
-        _baseUrl = Environment.GetEnvironmentVariable("URL_FRONT") 
+        _baseUrl = Environment.GetEnvironmentVariable("URL_FRONT")
             ?? throw new KeyNotFoundException("URL_FRONT environment variable is not set");
     }
 
     public async Task<Result> SendRegisteringConfirmationEmail(
-        string confirmationToken,
-        string firstName,
-        string lastName,
-        string receiverEmail,
-        string subject,
-        string message,
-        TimeSpan? linkExpiration = null)
+    string confirmationToken,
+    string firstName,
+    string lastName,
+    string receiverEmail,
+    string subject,
+    string message,
+    TimeSpan? linkExpiration = null)
     {
-        var confirmationLink = $"{_baseUrl}/confirm-email?token={Uri.EscapeDataString(confirmationToken)}";
-        
-        var htmlContent = BuildEmailTemplate(
-            title: "Confirmez votre adresse email",
-            greeting: $"Bonjour {firstName} {lastName},",
-            mainContent: $"""
-                <p>{message}</p>
-                <p>Pour activer votre compte, veuillez confirmer votre adresse email en cliquant sur le bouton ci-dessous :</p>
-            """,
-            buttonText: "Confirmer mon email",
-            buttonLink: confirmationLink,
-            footerNote: "Si vous n'avez pas créé de compte, vous pouvez ignorer cet email.",
+        var htmlContent = BuildConfirmationCodeEmail(
+            firstName: firstName,
+            lastName: lastName,
+            code: confirmationToken,
             linkExpiration: linkExpiration
         );
 
@@ -50,7 +42,7 @@ public class EmailService : IEmailService
         string message)
     {
         var loginLink = $"{_baseUrl}/login";
-        
+
         var htmlContent = BuildEmailTemplate(
             title: "Compte administrateur créé",
             greeting: $"Bonjour {newAdminFirstName} {newAdminLastName},",
@@ -76,7 +68,7 @@ public class EmailService : IEmailService
         TimeSpan? linkExpiration = null)
     {
         var resetLink = $"{_baseUrl}/reset-password?token={Uri.EscapeDataString(resetToken)}";
-        
+
         var htmlContent = BuildEmailTemplate(
             title: "Réinitialisation de mot de passe",
             greeting: $"Bonjour {firstName} {lastName},",
@@ -101,7 +93,7 @@ public class EmailService : IEmailService
         string message)
     {
         var loginLink = $"{_baseUrl}/login";
-        
+
         var htmlContent = BuildEmailTemplate(
             title: "Mot de passe modifié",
             greeting: $"Bonjour {firstName} {lastName},",
@@ -138,13 +130,13 @@ public class EmailService : IEmailService
             var days = (int)expiration.TotalDays;
             return days == 1 ? "1 jour" : $"{days} jours";
         }
-        
+
         if (expiration.TotalHours >= 1)
         {
             var hours = (int)expiration.TotalHours;
             return hours == 1 ? "1 heure" : $"{hours} heures";
         }
-        
+
         var minutes = (int)expiration.TotalMinutes;
         return minutes <= 1 ? "1 minute" : $"{minutes} minutes";
     }
@@ -159,8 +151,8 @@ public class EmailService : IEmailService
         TimeSpan? linkExpiration = null,
         bool showSecurityAlert = false)
     {
-        var warningSection = linkExpiration.HasValue 
-            ? $"""<p style="color: #e74c3c; font-size: 14px; margin-top: 20px;">⏰ Ce lien expire dans {FormatExpiration(linkExpiration.Value)}.</p>""" 
+        var warningSection = linkExpiration.HasValue
+            ? $"""<p style="color: #e74c3c; font-size: 14px; margin-top: 20px;">⏰ Ce lien expire dans {FormatExpiration(linkExpiration.Value)}.</p>"""
             : string.Empty;
 
         var securityAlertSection = showSecurityAlert
@@ -254,5 +246,89 @@ public class EmailService : IEmailService
             </body>
             </html>
             """;
+    }
+
+    private static string BuildConfirmationCodeEmail(
+    string firstName,
+    string lastName,
+    string code,
+    TimeSpan? linkExpiration = null)
+    {
+        var expirationSection = linkExpiration.HasValue
+            ? $"""<p style="color: #e74c3c; font-size: 14px; margin-top: 20px; text-align: center;">⏰ Ce code expire dans {FormatExpiration(linkExpiration.Value)}.</p>"""
+            : string.Empty;
+
+        return $"""
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Confirmez votre compte</title>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f7; line-height: 1.6;">
+            <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td align="center" style="padding: 40px 20px;">
+                        <table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+
+                            <!-- Header -->
+                            <tr>
+                                <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px 12px 0 0;">
+                                    <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">Confirmez votre compte</h1>
+                                </td>
+                            </tr>
+
+                            <!-- Body -->
+                            <tr>
+                                <td style="padding: 40px;">
+                                    <p style="margin: 0 0 20px; font-size: 16px; color: #333333; font-weight: 600;">Bonjour {firstName} {lastName},</p>
+
+                                    <p style="color: #555555; font-size: 15px; margin: 0 0 12px;">
+                                        Merci de vous être inscrit sur CesiZen ! Pour activer votre compte, suivez ces étapes :
+                                    </p>
+
+                                    <ol style="color: #555555; font-size: 15px; margin: 0 0 30px; padding-left: 20px; line-height: 2;">
+                                        <li>Ouvrez l'application <strong>CesiZen</strong> sur votre téléphone</li>
+                                        <li>Rendez-vous sur la page de confirmation de compte</li>
+                                        <li>Saisissez le code ci-dessous</li>
+                                    </ol>
+
+                                    <!-- Code block -->
+                                    <table role="presentation" style="width: 100%; margin: 10px 0 30px;">
+                                        <tr>
+                                            <td align="center">
+                                                <div style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 30px 48px;">
+                                                    <p style="margin: 0 0 8px; color: rgba(255,255,255,0.8); font-size: 13px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase;">Votre code</p>
+                                                    <p style="margin: 0; color: #ffffff; font-size: 48px; font-weight: 700; letter-spacing: 12px; font-family: 'Courier New', Courier, monospace;">{code}</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+
+                                    {expirationSection}
+
+                                    <p style="margin: 25px 0 0; font-size: 13px; color: #888888; text-align: center;">
+                                        Si vous n'avez pas créé de compte sur CesiZen, vous pouvez ignorer cet email.
+                                    </p>
+                                </td>
+                            </tr>
+
+                            <!-- Footer -->
+                            <tr>
+                                <td style="padding: 30px 40px; background-color: #f8f9fa; border-radius: 0 0 12px 12px; border-top: 1px solid #e9ecef;">
+                                    <p style="margin: 0; font-size: 12px; color: #aaaaaa; text-align: center;">
+                                        © {DateTime.UtcNow.Year} CesiZen - Tous droits réservés
+                                    </p>
+                                </td>
+                            </tr>
+
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        """;
     }
 }
