@@ -55,7 +55,7 @@ public class ConfigurationService : IConfigurationService
 
         // Log the create action
         await _actionLogger.LogCreateAsync(adminId, "Configuration", configuration.Id,
-            $"Created configuration '{configuration.Name}'");
+            $"Created configuration '{configuration.Name}' [Inhalation={configuration.Inhalation}s, Retention1={configuration.Retention1}s, Exhalation={configuration.Exhalation}s, Retention2={configuration.Retention2}s, Duration={configuration.DurationMinutes}min, Difficulty={configuration.Difficulty}/5, Objective='{configuration.Objective}', GuidanceType={configuration.GuidanceType}]");
 
         return configuration.ToDto();
     }
@@ -66,6 +66,18 @@ public class ConfigurationService : IConfigurationService
 
         if (configuration == null || configuration.DeletionTime != null)
             return null;
+
+        var changes = new List<string>();
+        if (configuration.Name != dto.Name) changes.Add($"Name: '{configuration.Name}' → '{dto.Name}'");
+        if (configuration.Inhalation != dto.Inhalation) changes.Add($"Inhalation: {configuration.Inhalation}s → {dto.Inhalation}s");
+        if (configuration.Retention1 != dto.Retention1) changes.Add($"Retention1: {configuration.Retention1}s → {dto.Retention1}s");
+        if (configuration.Exhalation != dto.Exhalation) changes.Add($"Exhalation: {configuration.Exhalation}s → {dto.Exhalation}s");
+        if (configuration.Retention2 != dto.Retention2) changes.Add($"Retention2: {configuration.Retention2}s → {dto.Retention2}s");
+        if (configuration.DurationMinutes != dto.DurationMinutes) changes.Add($"Duration: {configuration.DurationMinutes}min → {dto.DurationMinutes}min");
+        if (configuration.Difficulty != dto.Difficulty) changes.Add($"Difficulty: {configuration.Difficulty} → {dto.Difficulty}");
+        if (configuration.Objective != dto.Objective) changes.Add($"Objective: '{configuration.Objective}' → '{dto.Objective}'");
+        if (configuration.GuidanceType != dto.GuidanceType) changes.Add($"GuidanceType: {configuration.GuidanceType} → {dto.GuidanceType}");
+        var changesDescription = changes.Count > 0 ? string.Join(", ", changes) : "no changes";
 
         configuration.Name = dto.Name;
         configuration.Inhalation = dto.Inhalation;
@@ -82,7 +94,7 @@ public class ConfigurationService : IConfigurationService
 
         // Log the update action
         await _actionLogger.LogUpdateAsync(adminId, "Configuration", configuration.Id,
-            $"Updated configuration '{configuration.Name}'");
+            $"Updated configuration '{dto.Name}': {changesDescription}");
 
         return configuration.ToDto();
     }
