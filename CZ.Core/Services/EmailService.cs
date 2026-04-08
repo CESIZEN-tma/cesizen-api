@@ -38,21 +38,23 @@ public class EmailService : IEmailService
         string newAdminFirstName,
         string newAdminLastName,
         string receiverEmail,
+        string confirmationToken,
         string subject,
         string message)
     {
-        var loginLink = $"{_baseUrl}/login";
+        var confirmationLink = $"{_baseUrl}/confirm-account?token={Uri.EscapeDataString(confirmationToken)}";
 
         var htmlContent = BuildEmailTemplate(
             title: "Compte administrateur créé",
             greeting: $"Bonjour {newAdminFirstName} {newAdminLastName},",
             mainContent: $"""
                 <p>{message}</p>
-                <p>Un compte administrateur a été créé pour vous. Vous pouvez dès maintenant vous connecter à la plateforme.</p>
+                <p>Un compte administrateur a été créé pour vous sur la plateforme CesiZen. Vous devez d'abord confirmer votre compte avant de pouvoir vous connecter.</p>
+                <p>Votre token de confirmation : <strong>{confirmationToken}</strong></p>
             """,
-            buttonText: "Accéder à la plateforme",
-            buttonLink: loginLink,
-            footerNote: "Si vous n'êtes pas à l'origine de cette demande, veuillez contacter l'équipe support."
+            buttonText: "Confirmer mon compte",
+            buttonLink: confirmationLink,
+            footerNote: "Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail."
         );
 
         return await SendEmailSafelyAsync(receiverEmail, subject, htmlContent);

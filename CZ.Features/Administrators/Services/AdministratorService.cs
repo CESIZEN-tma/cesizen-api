@@ -1,8 +1,10 @@
+using api.CZ.Core.Services;
 using api.CZ.Features.Administrators.DTOs;
 using api.CZ.Features.Administrators.Extensions;
 using api.CZ.Features.Administrators.Factories;
 using api.CZ.Features.Administrators.Models;
 using api.CZ.Features.Administrators.Repositories;
+using api.CZ.Features.AdminEmailConfirmationTokens.Services;
 using api.CZ.Features.AdminLogs.Services;
 using Simply.Auth.Core.Abstractions;
 
@@ -14,17 +16,23 @@ public class AdministratorService : IAdministratorService
     private readonly IAdministratorFactory _factory;
     private readonly ISimplyAuthService _authService;
     private readonly IAdminActionLogger _actionLogger;
+    private readonly IAdminEmailConfirmationTokenService _confirmationTokenService;
+    private readonly IEmailService _emailService;
 
     public AdministratorService(
         IAdministratorRepository repository,
         IAdministratorFactory factory,
         ISimplyAuthService authService,
-        IAdminActionLogger actionLogger)
+        IAdminActionLogger actionLogger,
+        IAdminEmailConfirmationTokenService confirmationTokenService,
+        IEmailService emailService)
     {
         _repository = repository;
         _factory = factory;
         _authService = authService;
         _actionLogger = actionLogger;
+        _confirmationTokenService = confirmationTokenService;
+        _emailService = emailService;
     }
 
     public async Task<IEnumerable<GetAdministratorDto>> GetAllAsync()
@@ -53,6 +61,16 @@ public class AdministratorService : IAdministratorService
         var admin = _factory.Create(dto.Email, dto.FirstName, dto.LastName, passwordHash);
 
         await _repository.AddAsync(admin);
+
+        var tokenEntity = await _confirmationTokenService.NewToken(admin.Id);
+        await _emailService.SendAdministratorCreationEmail(
+            newAdminFirstName: admin.FirstName,
+            newAdminLastName: admin.LastName,
+            receiverEmail: admin.Email,
+            confirmationToken: tokenEntity.Token,
+            subject: "Activation de votre compte administrateur CesiZen",
+            message: "Bienvenue sur la plateforme d'administration CesiZen."
+        );
 
         await _actionLogger.LogCreateAsync(creatorAdminId, "Administrator", admin.Id,
             $"Created administrator: {admin.FirstName} {admin.LastName} <{admin.Email}>");
