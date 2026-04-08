@@ -55,7 +55,7 @@ public class AdministratorService : IAdministratorService
         await _repository.AddAsync(admin);
 
         await _actionLogger.LogCreateAsync(creatorAdminId, "Administrator", admin.Id,
-            $"Created administrator account for {admin.Email}");
+            $"Created administrator: {admin.FirstName} {admin.LastName} <{admin.Email}>");
 
         return admin.ToDto();
     }
@@ -67,6 +67,12 @@ public class AdministratorService : IAdministratorService
         if (admin == null || admin.DeletionTime != null)
             return null;
 
+        var changes = new List<string>();
+        if (admin.FirstName != dto.FirstName) changes.Add($"FirstName: '{admin.FirstName}' → '{dto.FirstName}'");
+        if (admin.LastName != dto.LastName) changes.Add($"LastName: '{admin.LastName}' → '{dto.LastName}'");
+        if (admin.ThumbnailUrl != dto.ThumbnailUrl) changes.Add("ThumbnailUrl updated");
+        var changesDescription = changes.Count > 0 ? string.Join(", ", changes) : "no changes";
+
         admin.FirstName = dto.FirstName;
         admin.LastName = dto.LastName;
         admin.ThumbnailUrl = dto.ThumbnailUrl;
@@ -75,7 +81,7 @@ public class AdministratorService : IAdministratorService
         await _repository.UpdateAsync(admin);
 
         await _actionLogger.LogUpdateAsync(adminId, "Administrator", id,
-            $"Updated administrator profile for {admin.Email}");
+            $"Updated administrator {admin.Email}: {changesDescription}");
 
         return admin.ToDto();
     }

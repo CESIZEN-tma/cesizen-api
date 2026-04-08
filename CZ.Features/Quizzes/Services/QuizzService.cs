@@ -123,6 +123,11 @@ public class QuizzService : IQuizzService
         if (quizz == null)
             return null;
 
+        var changes = new List<string>();
+        if (quizz.Nom != dto.Nom) changes.Add($"Name: '{quizz.Nom}' → '{dto.Nom}'");
+        if (quizz.Active != dto.Active) changes.Add($"Active: {quizz.Active} → {dto.Active}");
+        var changesDescription = changes.Count > 0 ? string.Join(", ", changes) : "no changes";
+
         quizz.Nom = dto.Nom;
         quizz.Active = dto.Active;
         quizz.UpdateTime = DateTime.UtcNow;
@@ -131,7 +136,7 @@ public class QuizzService : IQuizzService
 
         // Log the update action
         await _actionLogger.LogUpdateAsync(adminId, "Quiz", quizz.Id,
-            $"Updated quiz '{quizz.Nom}'");
+            $"Updated quiz '{dto.Nom}': {changesDescription}");
 
         return quizz.ToDto();
     }
@@ -142,6 +147,8 @@ public class QuizzService : IQuizzService
 
         if (quizz == null)
             return null;
+
+        var oldQuestionCount = quizz.Questions.Count;
 
         foreach (var question in quizz.Questions.ToList())
         {
@@ -188,7 +195,7 @@ public class QuizzService : IQuizzService
         }
 
         await _actionLogger.LogUpdateAsync(adminId, "Quiz", quizz.Id,
-            $"Updated full quiz '{quizz.Nom}' with {dto.Questions.Count} questions");
+            $"Replaced full quiz '{dto.Nom}': {oldQuestionCount} questions → {dto.Questions.Count} questions");
 
         return await GetByIdAsync(quizz.Id);
     }
@@ -213,7 +220,7 @@ public class QuizzService : IQuizzService
         await _quizzRepository.DeleteAsync(quizz);
 
         await _actionLogger.LogDeleteAsync(adminId, "Quiz", quizz.Id,
-            $"Deleted quiz '{quizzName}'");
+            $"Deleted quiz '{quizzName}' ({quizz.Questions.Count} questions)");
 
         return true;
     }

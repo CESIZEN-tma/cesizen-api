@@ -62,7 +62,7 @@ public class InformationPageService : IInformationPageService
         await _repository.AddAsync(page);
 
         await _actionLogger.LogCreateAsync(adminId, "InformationPage", page.Id,
-            $"Created information page '{page.Title}'");
+            $"Created information page '{page.Title}' [Status={page.Status}, ContentType={page.ContentType}, Active={page.Active}, Tags={page.IdInformationTags.Count}]");
 
         return page.ToDto();
     }
@@ -71,6 +71,14 @@ public class InformationPageService : IInformationPageService
     {
         var page = await _repository.FindWithTagsAsync(id);
         if (page == null) return null;
+
+        var changes = new List<string>();
+        if (page.Title != dto.Title) changes.Add($"Title: '{page.Title}' → '{dto.Title}'");
+        if (page.Status != dto.Status) changes.Add($"Status: {page.Status} → {dto.Status}");
+        if (page.ContentType != dto.ContentType) changes.Add($"ContentType: {page.ContentType} → {dto.ContentType}");
+        if (page.Active != dto.Active) changes.Add($"Active: {page.Active} → {dto.Active}");
+        if (page.CurrentlyEditing != dto.CurrentlyEditing) changes.Add($"CurrentlyEditing: {page.CurrentlyEditing} → {dto.CurrentlyEditing}");
+        var oldTagCount = page.IdInformationTags.Count;
 
         page.Title = dto.Title;
         page.Description = dto.Description;
@@ -89,10 +97,13 @@ public class InformationPageService : IInformationPageService
                 page.IdInformationTags.Add(tag);
         }
 
+        if (oldTagCount != page.IdInformationTags.Count) changes.Add($"Tags: {oldTagCount} → {page.IdInformationTags.Count}");
+        var changesDescription = changes.Count > 0 ? string.Join(", ", changes) : "no changes";
+
         await _repository.UpdateAsync(page);
 
         await _actionLogger.LogUpdateAsync(adminId, "InformationPage", page.Id,
-            $"Updated information page '{page.Title}'");
+            $"Updated information page '{dto.Title}': {changesDescription}");
 
         return page.ToDto();
     }
