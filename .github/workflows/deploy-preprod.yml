@@ -1,0 +1,69 @@
+name: Deploy - Preprod
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  test:
+    name: Build & Test (.NET)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Add private NuGet source
+        run: |
+          dotnet nuget add source "https://nuget.pkg.github.com/TitouanML/index.json" \
+            --name GitHub \
+            --username ${{ secrets.GH_NUGET_USERNAME }} \
+            --password ${{ secrets.GH_NUGET_TOKEN }} \
+            --store-password-in-clear-text
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run tests
+        run: dotnet test tests/api.Tests/api.Tests.csproj --no-build --configuration Release --verbosity normal
+
+  build-and-push:
+    name: Build & Push Docker image (preprod)
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/cesizen-api:preprod
+          build-args: |
+            GITHUB_USERNAME=${{ secrets.GH_NUGET_USERNAME }}
+            GITHUB_TOKEN=${{ secrets.GH_NUGET_TOKEN }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
