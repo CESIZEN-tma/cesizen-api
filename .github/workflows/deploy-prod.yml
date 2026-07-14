@@ -1,0 +1,83 @@
+name: Deploy - Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Build & Test (.NET)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Add private NuGet source
+        run: |
+          dotnet nuget add source "https://nuget.pkg.github.com/TitouanML/index.json" \
+            --name GitHub \
+            --username ${{ secrets.GH_NUGET_USERNAME }} \
+            --password ${{ secrets.GH_NUGET_TOKEN }} \
+            --store-password-in-clear-text
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run tests
+        run: dotnet test tests/api.Tests/api.Tests.csproj --no-build --configuration Release --verbosity normal
+
+  build-and-push:
+    name: Build & Push Docker image (prod)
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set lowercase repository owner
+        run: echo "REPO_OWNER_LC=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ env.REPO_OWNER_LC }}/cesizen-api:prod
+            ghcr.io/${{ env.REPO_OWNER_LC }}/cesizen-api:latest
+          build-args: |
+            GITHUB_USERNAME=${{ secrets.GH_NUGET_USERNAME }}
+            GITHUB_TOKEN=${{ secrets.GH_NUGET_TOKEN }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Scan image for vulnerabilities (Trivy)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ghcr.io/${{ env.REPO_OWNER_LC }}/cesizen-api:prod
+          format: table
+          exit-code: 0
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH
