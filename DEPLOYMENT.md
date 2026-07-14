@@ -8,7 +8,11 @@ cesizen-api est une API REST en **.NET 10** (C#) exposée via un conteneur Docke
 Développeur → GitHub (push) → GitHub Actions (CI/CD) → GHCR (registry) → Serveur (docker-compose)
                                                                                     │
                                                                              PostgreSQL + PgBouncer
+
+Client (Web / Mobile) → Cloudflare (edge : TLS, WAF, DDoS) → Cloudflare Tunnel (Zero Trust) → Serveur (docker-compose)
 ```
+
+En production, l'entrée réseau ne se fait plus par une exposition directe des ports du serveur mais par un **Cloudflare Tunnel** (`cloudflared`), qui établit une connexion sortante depuis le serveur vers Cloudflare : aucun port entrant n'est ouvert publiquement, et la terminaison TLS est assurée en amont par Cloudflare (voir `RGPD.md` section 7 bis pour le détail).
 
 ## 2. Environnements
 
