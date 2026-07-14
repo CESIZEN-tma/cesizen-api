@@ -46,11 +46,4 @@ public class AdminLogController : ControllerBase
         var logs = await _service.GetLogsByEntityAsync(type, id);
         return Ok(logs);
     }
-
-    [HttpGet("lineage/{entityType}/{entityId:guid}")]
-    public async Task<IActionResult> GetEntityLineage(string entityType, Guid entityId)
-    {
-        var lineage = await _service.GetEntityLineageAsync(entityType, entityId);
-        return Ok(lineage);
-    }
 }

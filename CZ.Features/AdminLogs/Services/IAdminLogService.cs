@@ -10,5 +10,4 @@ public interface IAdminLogService
     Task<IEnumerable<GetAdminLogDto>> GetRecentLogsAsync(int count = 50);
     Task<IEnumerable<GetAdminLogDto>> GetLogsByAdministratorAsync(Guid adminId);
     Task<IEnumerable<GetAdminLogDto>> GetLogsByEntityAsync(string entityType, Guid entityId);
-    Task<EntityLineageDto> GetEntityLineageAsync(string entityType, Guid entityId);
 }

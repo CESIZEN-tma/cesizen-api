@@ -26,8 +26,64 @@ public class SessionServiceTests
         _sut = new SessionService(_mockRepository.Object, _mockFactory.Object, _mockLogger.Object);
     }
 
+    [Fact]
+    public async Task GetByRefreshToken_ValidToken_ReturnsSession()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var refreshToken = "valid-refresh-token";
+        var expectedSession = TestDataBuilder.Sessions.BuildValid(userId);
+        expectedSession.Token = refreshToken;
 
-  
+        _mockRepository.Setup(r => r.FirstOrDefaultAsync(
+                It.IsAny<Expression<Func<Session, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedSession);
+
+        // Act
+        var result = await _sut.GetByRefreshToken(refreshToken);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().Be(expectedSession);
+        result!.Token.Should().Be(refreshToken);
+    }
+
+    [Fact]
+    public async Task GetByRefreshToken_ExpiredToken_ReturnsNull()
+    {
+        // Arrange
+        var refreshToken = "expired-token";
+
+        _mockRepository.Setup(r => r.FirstOrDefaultAsync(
+                It.IsAny<Expression<Func<Session, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Session?)null);
+
+        // Act
+        var result = await _sut.GetByRefreshToken(refreshToken);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetByRefreshToken_ConsumedToken_ReturnsNull()
+    {
+        // Arrange
+        var refreshToken = "consumed-token";
+
+        _mockRepository.Setup(r => r.FirstOrDefaultAsync(
+                It.IsAny<Expression<Func<Session, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Session?)null);
+
+        // Act
+        var result = await _sut.GetByRefreshToken(refreshToken);
+
+        // Assert
+        result.Should().BeNull();
+    }
 
     [Fact]
     public async Task CreateSession_ValidParameters_CreatesAndReturnsSession()

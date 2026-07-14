@@ -58,15 +58,13 @@ public class InformationTagService : IInformationTagService
         if (tag == null || tag.DeletionTime != null)
             return null;
 
-        var oldLabel = tag.Label;
-
         tag.Label = dto.Label;
         tag.UpdateTime = DateTime.UtcNow;
 
         await _repository.UpdateAsync(tag);
 
         await _actionLogger.LogUpdateAsync(adminId, "InformationTag", id,
-            $"Updated information tag: '{oldLabel}' → '{dto.Label}'");
+            $"Updated information tag to '{tag.Label}'");
 
         return tag.ToDto();
     }

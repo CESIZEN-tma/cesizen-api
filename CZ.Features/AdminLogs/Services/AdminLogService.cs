@@ -93,32 +93,4 @@ public class AdminLogService : IAdminLogService
             AdministratorName = $"{l.IdAdministratorNavigation.FirstName} {l.IdAdministratorNavigation.LastName}"
         });
     }
-
-    public async Task<EntityLineageDto> GetEntityLineageAsync(string entityType, Guid entityId)
-    {
-        var logs = await _repository.GetLogsByEntityAsync(entityType, entityId);
-
-        var events = logs
-            .OrderBy(l => l.CreationTime)
-            .Select((l, index) => new LineageEventDto
-            {
-                Step = index + 1,
-                LogId = l.Id,
-                ActionCode = l.ActionCode,
-                Description = l.Description,
-                OccurredAt = l.CreationTime,
-                AdministratorId = l.IdAdministrator,
-                AdministratorEmail = l.IdAdministratorNavigation.Email,
-                AdministratorName = $"{l.IdAdministratorNavigation.FirstName} {l.IdAdministratorNavigation.LastName}"
-            })
-            .ToList();
-
-        return new EntityLineageDto
-        {
-            EntityType = entityType,
-            EntityId = entityId,
-            TotalEvents = events.Count,
-            Events = events
-        };
-    }
 }

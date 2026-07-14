@@ -268,30 +268,7 @@ public static class DependenciesExtensions
         builder.Services.AddSwaggerGen(options =>
         {
             options.SwaggerDoc("v1", new OpenApiInfo { Title = "CESIZen", Version = "v1" });
-            options.AddSecurityDefinition("api-key", new OpenApiSecurityScheme
-            {
-                In = ParameterLocation.Header,
-                Type = SecuritySchemeType.ApiKey,
-                Name = "x-api-key",
-            });
-
-            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
-            {
-                Name = "Authorization",
-                In = ParameterLocation.Header,
-                Type = SecuritySchemeType.Http,
-                Scheme = "Bearer"
-            });
-            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
-            {
-                [new OpenApiSecuritySchemeReference("api-key", document)] = []
-            });
-            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
-            {
-                [new OpenApiSecuritySchemeReference("Bearer", document)] = []
-            });
         });
-        
     }
     
     

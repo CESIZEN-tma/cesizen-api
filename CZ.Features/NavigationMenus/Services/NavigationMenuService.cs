@@ -82,7 +82,7 @@ public class NavigationMenuService : INavigationMenuService
 
         // Log the create action
         await _actionLogger.LogCreateAsync(adminId, "NavigationMenu", menu.Id,
-            $"Created navigation menu '{menu.Label}' [Position={menu.Position}, Level={(menu.ParentId.HasValue ? $"sub-menu of {menu.ParentId}" : "root")}{(menu.Url != null ? $", URL={menu.Url}" : "")}]");
+            $"Created navigation menu '{menu.Label}' at position {menu.Position}");
 
         return menu.ToDto();
     }
@@ -93,13 +93,6 @@ public class NavigationMenuService : INavigationMenuService
 
         if (menu == null || menu.DeletionTime != null)
             return null;
-
-        var changes = new List<string>();
-        if (menu.Label != dto.Label) changes.Add($"Label: '{menu.Label}' → '{dto.Label}'");
-        if (menu.Position != dto.Position) changes.Add($"Position: {menu.Position} → {dto.Position}");
-        if (menu.ParentId != dto.ParentId) changes.Add($"Parent: {menu.ParentId?.ToString() ?? "root"} → {dto.ParentId?.ToString() ?? "root"}");
-        if (menu.Url != dto.Url) changes.Add($"URL: '{menu.Url ?? "none"}' → '{dto.Url ?? "none"}'");
-        var changesDescription = changes.Count > 0 ? string.Join(", ", changes) : "no changes";
 
         menu.ParentId = dto.ParentId;
         menu.Position = dto.Position;
@@ -112,7 +105,7 @@ public class NavigationMenuService : INavigationMenuService
 
         // Log the update action
         await _actionLogger.LogUpdateAsync(adminId, "NavigationMenu", menu.Id,
-            $"Updated navigation menu '{dto.Label}': {changesDescription}");
+            $"Updated navigation menu '{menu.Label}' at position {menu.Position}");
 
         return menu.ToDto();
     }
@@ -158,8 +151,7 @@ public class NavigationMenuService : INavigationMenuService
             await _repository.UpdateAsync(menu);
         }
 
-        var posDetails = string.Join(", ", positions.Select(p => $"{p.Id}→pos{p.Position}"));
         await _actionLogger.LogUpdateAsync(adminId, "NavigationMenu", Guid.Empty,
-            $"Reordered {positions.Count} menu item(s): {posDetails}");
+            $"Updated positions for {positions.Count} menu item(s)");
     }
 }
