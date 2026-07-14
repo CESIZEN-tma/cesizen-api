@@ -61,7 +61,7 @@ jobs:
             /k:"CESIZEN-tma_cesizen-api" \
             /o:"cesizen-tma" \
             /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \ 
             /d:sonar.cs.cobertura.reportsPaths="coverage/**/coverage.cobertura.xml" \
             /d:sonar.exclusions="**/Migrations/**" \
             /d:sonar.coverage.exclusions="**/Migrations/**,tests/**"
