@@ -88,7 +88,7 @@ La pipeline échoue et bloque le merge si l'une des étapes de build/tests ne pa
 |---|---|
 | `GH_NUGET_USERNAME` | Authentification NuGet privé GitHub Packages |
 | `GH_NUGET_TOKEN` | Token PAT avec scope `read:packages` |
-| `SONAR_TOKEN` | Jeton d'authentification SonarCloud (analyse statique + Quality Gate) |
+| `GH_SONAR_TOKEN` | Jeton d'authentification SonarCloud (analyse statique + Quality Gate) |
 
 #### Secrets d'environnement `preprod`
 
