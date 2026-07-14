@@ -43,6 +43,12 @@ cesizen-api est une API REST .NET 10 exposant des données personnelles (comptes
 ### Infrastructure
 - Base de données accessible uniquement via le réseau Docker interne (pas exposée publiquement)
 - PgBouncer limite le nombre de connexions simultanées
+- Conteneur exécuté avec un utilisateur non privilégié (`USER $APP_UID` dans le `Dockerfile`, image de base `mcr.microsoft.com/dotnet/aspnet`) — aucun processus applicatif ne tourne en `root`
+
+### Analyse statique du code (SAST)
+- **SonarCloud** intégré dans `.github/workflows/ci.yml` à chaque push et Pull Request : détection des bugs, code smells, vulnérabilités et secrets potentiellement codés en dur, calcul du taux de couverture de tests (Cobertura via `coverlet.collector`)
+- Complémentaire à **Trivy** (`deploy-preprod.yml` / `deploy-prod.yml`) qui scanne les CVE connues des dépendances et de l'image Docker : Sonar couvre les vulnérabilités *introduites dans le code métier* (ex. injection, gestion des secrets, mauvaises pratiques cryptographiques) que Trivy ne détecte pas
+- Quality Gate actuellement non bloquant (rapport + commentaire de PR), le temps de stabiliser la dette technique existante
 
 ---
 

@@ -62,10 +62,10 @@ Conformément au RGPD (articles 15 à 22), les utilisateurs disposent des droits
 
 | Droit | Description | Mise en œuvre |
 |---|---|---|
-| **Accès** | Obtenir une copie de ses données | Export via l'API (`GET /user/me`) |
-| **Rectification** | Corriger des données inexactes | Modification du profil dans l'application |
-| **Effacement** | Supprimer son compte et toutes ses données | `DELETE /user/me` — suppression en cascade |
-| **Portabilité** | Recevoir ses données dans un format structuré | Export JSON via l'API |
+| **Accès** | Obtenir une copie de ses données | `GET /api/users/profile` |
+| **Rectification** | Corriger des données inexactes | `PUT /api/users/profile` |
+| **Effacement** | Supprimer son compte et toutes ses données | `DELETE /api/users/account` — suppression en cascade |
+| **Portabilité** | Recevoir ses données dans un format structuré | Réponse JSON structurée de `GET /api/users/profile`, réutilisable telle quelle (pas d'endpoint d'export dédié à ce jour) |
 | **Opposition** | S'opposer à un traitement | Contact direct — pas de traitement à des fins marketing |
 | **Limitation** | Suspendre un traitement | Désactivation temporaire du compte |
 

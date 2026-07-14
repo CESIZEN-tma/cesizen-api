@@ -1,5 +1,10 @@
 # CesiZen — API
 
+[![CI](https://github.com/CESIZEN-tma/cesizen-api/actions/workflows/ci.yml/badge.svg)](https://github.com/CESIZEN-tma/cesizen-api/actions/workflows/ci.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=CESIZEN-tma_cesizen-api&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=CESIZEN-tma_cesizen-api)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=CESIZEN-tma_cesizen-api&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=CESIZEN-tma_cesizen-api)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=CESIZEN-tma_cesizen-api&metric=coverage)](https://sonarcloud.io/summary/new_code?id=CESIZEN-tma_cesizen-api)
+
 API REST de l'application CesiZen, construite avec **ASP.NET Core** (.NET 10) et **PostgreSQL**.
 
 ## Prérequis

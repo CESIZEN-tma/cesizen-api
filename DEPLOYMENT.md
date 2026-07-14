@@ -36,10 +36,12 @@ feature/* ──► dev ──► main
 |---|---|---|
 | Configuration NuGet | Ajout source privée GitHub Packages | Accès aux packages internes |
 | Restore | `dotnet restore` | Récupération des dépendances |
+| Analyse statique (SAST) | `dotnet-sonarscanner begin` | Démarre l'analyse SonarCloud (bugs, code smells, vulnérabilités, duplication) |
 | Build | `dotnet build --no-restore` | Compilation et vérification des types |
-| Tests | `dotnet test --no-build` | Tests unitaires et d'intégration |
+| Tests + couverture | `dotnet test --collect:"XPlat Code Coverage"` | Tests unitaires/intégration + rapport Cobertura |
+| Publication analyse | `dotnet-sonarscanner end` | Envoie le rapport et la couverture à SonarCloud |
 
-La pipeline échoue et bloque le merge si l'une des étapes ne passe pas.
+La pipeline échoue et bloque le merge si l'une des étapes de build/tests ne passe pas. L'analyse SonarCloud est actuellement **non bloquante** (`sonar.qualitygate.wait` non activé) : elle remonte un rapport consultable sur le dashboard et en commentaire de PR sans empêcher le merge, le temps de stabiliser le Quality Gate. Elle pourra être basculée en bloquant une fois le code nettoyé.
 
 ### 3.2 Déploiement préprod (`.github/workflows/deploy-preprod.yml`)
 
@@ -82,6 +84,7 @@ La pipeline échoue et bloque le merge si l'une des étapes ne passe pas.
 |---|---|
 | `GH_NUGET_USERNAME` | Authentification NuGet privé GitHub Packages |
 | `GH_NUGET_TOKEN` | Token PAT avec scope `read:packages` |
+| `SONAR_TOKEN` | Jeton d'authentification SonarCloud (analyse statique + Quality Gate) |
 
 #### Secrets d'environnement `preprod`
 
