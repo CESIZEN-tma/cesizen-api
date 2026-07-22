@@ -105,7 +105,8 @@ public class DocumentationService : IDocumentationService
                     ? "href=\"/api/public/docs\""
                     : $"href=\"/api/public/docs/{finalPath}\"";
             },
-            RegexOptions.IgnoreCase
+            RegexOptions.IgnoreCase,
+            TimeSpan.FromSeconds(1)
         );
     }
 

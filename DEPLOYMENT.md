@@ -40,12 +40,12 @@ feature/* ──► dev ──► main
 |---|---|---|
 | Configuration NuGet | Ajout source privée GitHub Packages | Accès aux packages internes |
 | Restore | `dotnet restore` | Récupération des dépendances |
-| Analyse statique (SAST) | `dotnet-sonarscanner begin` | Démarre l'analyse SonarCloud (bugs, code smells, vulnérabilités, duplication) |
 | Build | `dotnet build --no-restore` | Compilation et vérification des types |
-| Tests + couverture | `dotnet test --collect:"XPlat Code Coverage"` | Tests unitaires/intégration + rapport Cobertura |
-| Publication analyse | `dotnet-sonarscanner end` | Envoie le rapport et la couverture à SonarCloud |
+| Tests | `dotnet test --no-build` | Tests unitaires et d'intégration |
 
-La pipeline échoue et bloque le merge si l'une des étapes de build/tests ne passe pas. L'analyse SonarCloud est actuellement **non bloquante** (`sonar.qualitygate.wait` non activé) : elle remonte un rapport consultable sur le dashboard et en commentaire de PR sans empêcher le merge, le temps de stabiliser le Quality Gate. Elle pourra être basculée en bloquant une fois le code nettoyé.
+La pipeline échoue et bloque le merge si l'une des étapes ne passe pas.
+
+> **Analyse statique (SonarCloud)** : ne tourne pas ici. Le dépôt étant privé, le plan gratuit de SonarCloud n'analyse pas les branches/PR (fonctionnalité payante) — le check restait bloqué indéfiniment sur les Pull Requests sans jamais pouvoir passer. L'analyse a donc été déplacée dans `deploy-prod.yml`, qui ne se déclenche que sur push vers `main` : c'est le seul contexte où le plan gratuit affiche réellement un résultat exploitable.
 
 ### 3.2 Déploiement préprod (`.github/workflows/deploy-preprod.yml`)
 
@@ -64,7 +64,7 @@ La pipeline échoue et bloque le merge si l'une des étapes de build/tests ne pa
 
 | Étape | Description |
 |---|---|
-| 1. Tests | Rejeu complet de la CI |
+| 1. Tests + analyse SonarCloud | Rejeu complet de la CI, plus `dotnet-sonarscanner` (bugs, code smells, vulnérabilités, couverture Cobertura) — non bloquant (`sonar.qualitygate.wait` non activé) |
 | 2. Build Docker | Image optimisée (multi-stage, runtime only) |
 | 3. Push GHCR | Tags `:prod` et `:latest` |
 | 4. Tag sémantique | Création automatique d'un tag `vX.Y.Z` (workflow `release.yml`) |

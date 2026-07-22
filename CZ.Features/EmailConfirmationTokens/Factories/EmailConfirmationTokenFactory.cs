@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using api.CZ.Core.Factories;
 using api.CZ.Features.EmailConfirmationTokens.Models;
 
@@ -36,7 +37,6 @@ public class EmailConfirmationTokenFactory : BaseFactory<EmailConfirmationToken>
     
     private static string GenerateToken()
     {
-        var random = new Random();
-        return random.Next(100000, 1000000).ToString();
+        return RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
     }
 }
