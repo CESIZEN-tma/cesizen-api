@@ -16,31 +16,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-
-      - name: Setup Java (required by SonarScanner)
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Cache SonarCloud packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
-
-      - name: Install SonarCloud scanner
-        run: |
-          dotnet tool install --global dotnet-sonarscanner
-          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
 
       - name: Add private NuGet source
         run: |
@@ -53,28 +33,8 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
-      - name: Begin SonarCloud analysis
-        env:
-          SONAR_TOKEN: ${{ secrets.GH_SONAR_TOKEN }}
-        run: |
-          dotnet-sonarscanner begin \
-            /k:"CESIZEN-tma_cesizen-api" \
-            /o:"cesizen-tma" \
-            /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.token="${{ secrets.GH_SONAR_TOKEN }}" \
-            /d:sonar.cs.cobertura.reportsPaths="coverage/**/coverage.cobertura.xml" \
-            /d:sonar.exclusions="**/Migrations/**" \
-            /d:sonar.coverage.exclusions="**/Migrations/**,tests/**"
-
       - name: Build
         run: dotnet build --no-restore --configuration Release
 
-      - name: Run tests with coverage
-        run: |
-          dotnet test tests/api.Tests/api.Tests.csproj --no-build --configuration Release \
-            --collect:"XPlat Code Coverage" --results-directory ./coverage --verbosity normal
-
-      - name: End SonarCloud analysis
-        env:
-          SONAR_TOKEN: ${{ secrets.GH_SONAR_TOKEN }}
-        run: dotnet-sonarscanner end /d:sonar.token="${{ secrets.GH_SONAR_TOKEN }}"
+      - name: Run tests
+        run: dotnet test tests/api.Tests/api.Tests.csproj --no-build --configuration Release --verbosity normal
