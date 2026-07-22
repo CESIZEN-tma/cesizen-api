@@ -70,7 +70,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          dotnet test tests/api.Tests/api.Tests.csproj --no-build --configuration Release \
+          dotnet test tests/api.Tests/api.Tests.csproj --configuration Release \
             --collect:"XPlat Code Coverage" --results-directory ./coverage --verbosity normal
 
       - name: End SonarCloud analysis

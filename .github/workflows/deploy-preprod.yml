@@ -36,7 +36,7 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Run tests
-        run: dotnet test tests/api.Tests/api.Tests.csproj --no-build --configuration Release --verbosity normal
+        run: dotnet test tests/api.Tests/api.Tests.csproj --configuration Release --verbosity normal
 
   build-and-push:
     name: Build & Push Docker image (preprod)

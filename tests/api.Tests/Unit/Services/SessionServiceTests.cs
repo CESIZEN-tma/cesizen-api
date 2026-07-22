@@ -35,10 +35,10 @@ public class SessionServiceTests
         var expectedSession = TestDataBuilder.Sessions.BuildValid(userId);
         expectedSession.Token = refreshToken;
 
-        _mockRepository.Setup(r => r.FirstOrDefaultAsync(
+        _mockRepository.Setup(r => r.ListAsync(
                 It.IsAny<Expression<Func<Session, bool>>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(expectedSession);
+            .ReturnsAsync(new List<Session> { expectedSession });
 
         // Act
         var result = await _sut.GetByRefreshToken(refreshToken);
@@ -55,10 +55,10 @@ public class SessionServiceTests
         // Arrange
         var refreshToken = "expired-token";
 
-        _mockRepository.Setup(r => r.FirstOrDefaultAsync(
+        _mockRepository.Setup(r => r.ListAsync(
                 It.IsAny<Expression<Func<Session, bool>>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Session?)null);
+            .ReturnsAsync(new List<Session>());
 
         // Act
         var result = await _sut.GetByRefreshToken(refreshToken);
@@ -73,10 +73,10 @@ public class SessionServiceTests
         // Arrange
         var refreshToken = "consumed-token";
 
-        _mockRepository.Setup(r => r.FirstOrDefaultAsync(
+        _mockRepository.Setup(r => r.ListAsync(
                 It.IsAny<Expression<Func<Session, bool>>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Session?)null);
+            .ReturnsAsync(new List<Session>());
 
         // Act
         var result = await _sut.GetByRefreshToken(refreshToken);
